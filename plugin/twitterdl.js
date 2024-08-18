@@ -1,5 +1,8 @@
 const axios = require("axios");
-const url = "https://tools.betabotz.eu.org/tools/twitterdl?url=";
+require('dotenv').config()
+
+
+const url = `${process.env.BASE_AI_URL}/tools/twitterdl?url=`
 
 const isValidURL = (url) => {
   try {

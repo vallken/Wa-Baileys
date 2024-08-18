@@ -1,6 +1,9 @@
 const formData = require("form-data");
 const axios = require("axios");
 const { downloadMediaMessage } = require("@whiskeysockets/baileys");
+require('dotenv').config()
+
+
 function isValidURL(input) {
   try {
     new URL(input);
@@ -11,7 +14,7 @@ function isValidURL(input) {
 }
 
 const execute = async (sock, msg, args) => {
-  const url = "https://tools.betabotz.eu.org";
+  const url = process.env.BASE_AI_URL;
   if (!args)
     return sock.sendMessage(msg.key.remoteJid, {
       text: "Masukkan link gambar yang akan di-edit.",
