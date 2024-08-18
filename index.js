@@ -7,7 +7,11 @@ const { Boom } = require("@hapi/boom");
 const fs = require("fs");
 const path = require("path");
 const afkPlugin = require("./plugin/afk")
+const jadwalPlugin = require('./plugin/ingatkanSholat')
+const express = require('express')
 
+const app = express()
+const port = process.env.PORT || 3000;
 const client = {
   commands: new Map(),
 };
@@ -57,6 +61,7 @@ async function connectToWhatsApp() {
       }
     } else if (connection === "open") {
       console.log("Connected to WhatsApp");
+      jadwalPlugin.initializeSchedules(sock)
     }
   });
 
@@ -108,3 +113,11 @@ async function connectToWhatsApp() {
 
 // Run in main file
 connectToWhatsApp();
+
+app.get('/', (req, res) => {
+  res.send('Baileys Bot is running');
+});
+
+app.listen(port, () => {
+  console.log(`Server is listening on port ${port}`);
+});
