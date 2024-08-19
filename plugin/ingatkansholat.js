@@ -114,7 +114,7 @@ const schedulePrayerTimes = (jadwal, sock, userId) => {
   const prayerTimes = [
     { time: jadwal.imsak, name: "Imsak" },
     { time: jadwal.subuh, name: "Subuh" },
-    { time: jadwal.terbit, name: "Terbit" },
+    // { time: jadwal.terbit, name: "Terbit" },
     { time: jadwal.dhuha, name: "Dhuha" },
     { time: jadwal.dzuhur, name: "Dzuhur" },
     { time: jadwal.ashar, name: "Ashar" },
@@ -195,7 +195,7 @@ const scheduleDailyJobs = async (sock) => {
   await initializeSchedules(sock);
 };
 
-cron.schedule("0 1 * * *", () => scheduleDailyJobs(global.sock), {
+cron.schedule("0 8 * * *", () => scheduleDailyJobs(global.sock), {
   timezone: "Asia/Jakarta",
 });
 
