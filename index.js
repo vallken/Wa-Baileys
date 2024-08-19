@@ -7,7 +7,7 @@ const { Boom } = require("@hapi/boom");
 const fs = require("fs");
 const path = require("path");
 const afkPlugin = require("./plugin/afk")
-const jadwalPlugin = require('./plugin/ingatkanSholat')
+const jadwalPlugin = require('./plugin/ingatkansholat')
 const express = require('express')
 
 const app = express()
