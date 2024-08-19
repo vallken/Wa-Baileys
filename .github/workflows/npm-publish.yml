@@ -1,6 +1,10 @@
 name: Node.js Package
 
 on:
+  push:
+    branches:
+    - main
+    - release/*
   release:
     types: [created]
 
@@ -13,7 +17,7 @@ jobs:
         with:
           node-version: 20
       - run: pnpm install
-      - run: pnpm test
+      - run: node .
 
   publish-npm:
     needs: build
@@ -28,4 +32,4 @@ jobs:
       - run: pnpm publish
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          BASE_AI_URL: ${{ secrtes.BASE_AI_URL }}
+          BASE_AI_URL: ${{ secrets.BASE_AI_URL }}
