@@ -6,11 +6,19 @@ const {
 const { Boom } = require("@hapi/boom");
 const fs = require("fs");
 const path = require("path");
-const afkPlugin = require("./plugin/afk")
-const jadwalPlugin = require('./plugin/ingatkanSholat')
-const express = require('express')
+const afkPlugin = require("./plugin/afk");
+const jadwalPlugin = require("./plugin/ingatkanSholat");
+const express = require("express");
+const mongoose = require("mongoose");
 
-const app = express()
+require("dotenv").config();
+
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.error("Could not connect to MongoDB:", err));
+
+const app = express();
 const port = process.env.PORT || 3000;
 const client = {
   commands: new Map(),
@@ -43,13 +51,12 @@ async function connectToWhatsApp() {
     printQRInTerminal: true,
   });
 
-
   sock.ev.on("connection.update", (update) => {
     const { connection, lastDisconnect } = update;
     if (connection === "close") {
       const shouldReconnect =
-        (lastDisconnect.error instanceof Boom &&
-        lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut);
+        lastDisconnect.error instanceof Boom &&
+        lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut;
       console.log(
         "Connection closed due to ",
         lastDisconnect.error,
@@ -61,18 +68,14 @@ async function connectToWhatsApp() {
       }
     } else if (connection === "open") {
       console.log("Connected to WhatsApp");
-      jadwalPlugin.initializeSchedules(sock)
+      jadwalPlugin.initializeSchedules(sock);
     }
   });
 
-
-
-
   sock.ev.on("messages.upsert", async (m) => {
-    
     const msg = m.messages[0];
-    await afkPlugin.checkAfkMention(sock, msg)
-    if (msg.key.fromMe) return; // Ignore self-messages    
+    await afkPlugin.checkAfkMention(sock, msg);
+    if (msg.key.fromMe) return; // Ignore self-messages
     if (msg.message) {
       if (msg.message.conversation) {
         messageContent = msg.message.conversation;
@@ -83,12 +86,10 @@ async function connectToWhatsApp() {
       } else if (msg.message.videoMessage) {
         messageContent = msg.message.videoMessage.caption;
       }
-      
       if (messageContent.startsWith(",")) {
-        
-        await sock.sendPresenceUpdate('composing', msg.key.remoteJid);
+        await sock.sendPresenceUpdate("composing", msg.key.remoteJid);
         await sock.readMessages([msg.key]);
-        
+
         const args = messageContent.slice(1).trim().split(/ +/g);
         const command = args.shift().toLowerCase();
 
@@ -99,10 +100,14 @@ async function connectToWhatsApp() {
             await client.commands.get(command).execute(sock, msg, args, m);
           } catch (error) {
             console.error("Error executing command:", error);
-            await sock.sendMessage(msg.key.remoteJid, { text: "An error occurred while processing the command" });
+            await sock.sendMessage(msg.key.remoteJid, {
+              text: "An error occurred while processing the command",
+            });
           }
         } else {
-          await sock.sendMessage(msg.key.remoteJid, { text: "Command not found. Type .help to get a list of all commands" });
+          await sock.sendMessage(msg.key.remoteJid, {
+            text: "Command not found. Type .help to get a list of all commands",
+          });
         }
       }
     }
@@ -114,8 +119,8 @@ async function connectToWhatsApp() {
 // Run in main file
 connectToWhatsApp();
 
-app.get('/', (req, res) => {
-  res.send('Baileys Bot is running');
+app.get("/", (req, res) => {
+  res.send("Baileys Bot is running");
 });
 
 app.listen(port, () => {

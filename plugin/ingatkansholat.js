@@ -2,8 +2,9 @@ const axios = require("axios");
 const cron = require("node-cron");
 const fs = require("fs").promises;
 const path = require("path");
+const Jadwal = require("../lib/db/jadwal");
 
-const ListPath = path.resolve(__dirname, "userList.json");
+
 const filePath = path.resolve(__dirname, "../helper/listKota.json");
 
 let listKota;
@@ -21,25 +22,16 @@ const readListKota = async () => {
 
 const getFormattedDate = () => {
   const today = new Date();
-  return today.toISOString().split('T')[0];
+  return today.toISOString().split("T")[0];
 };
 
 const setJadwalStatus = async (userId, kota, jadwal) => {
   try {
-    let jadwalList = [];
-    try {
-      const data = await fs.readFile(ListPath, "utf8");
-      jadwalList = JSON.parse(data);
-    } catch (error) {
-      if (error.code !== "ENOENT") throw error;
-    }
-    const existingIndex = jadwalList.findIndex(item => item.userId === userId);
-    if (existingIndex !== -1) {
-      jadwalList[existingIndex] = { userId, kota, jadwal, timestamp: new Date() };
-    } else {
-      jadwalList.push({ userId, kota, jadwal, timestamp: new Date() });
-    }
-    await fs.writeFile(ListPath, JSON.stringify(jadwalList, null, 2));
+    await Jadwal.findOneAndUpdate(
+      { userId },
+      { kota, jadwal, timestamp: new Date() },
+      { upsert: true, new: true }
+    );
     console.log(`Jadwal status set for user ${userId}`);
   } catch (err) {
     console.error("Error setting jadwal status:", err);
@@ -48,11 +40,8 @@ const setJadwalStatus = async (userId, kota, jadwal) => {
 
 const getJadwalStatus = async (userId) => {
   try {
-    const data = await fs.readFile(ListPath, "utf8");
-    const jadwalList = JSON.parse(data);
-    return jadwalList.find(item => item.userId === userId) || null;
+    return await Jadwal.findOne({ userId });
   } catch (err) {
-    if (err.code === "ENOENT") return null;
     console.error("Error getting jadwal status:", err);
     return null;
   }
@@ -60,21 +49,16 @@ const getJadwalStatus = async (userId) => {
 
 const removeJadwalStatus = async (userId) => {
   try {
-    const data = await fs.readFile(ListPath, "utf8");
-    let jadwalList = JSON.parse(data);
-    jadwalList = jadwalList.filter(item => item.userId !== userId);
-    await fs.writeFile(ListPath, JSON.stringify(jadwalList, null, 2));
+    await Jadwal.findOneAndDelete({ userId });
 
     if (scheduleJobs[userId]) {
-      scheduleJobs[userId].forEach(job => job.stop());
+      scheduleJobs[userId].forEach((job) => job.stop());
       delete scheduleJobs[userId];
     }
 
     console.log(`Jadwal status removed for user ${userId}`);
   } catch (err) {
-    if (err.code !== "ENOENT") {
-      console.error("Error removing jadwal status:", err);
-    }
+    console.error("Error removing jadwal status:", err);
   }
 };
 
@@ -96,18 +80,22 @@ const sendMessage = (sock, userId, time, prayerName) => {
 
 const schedulePrayerTimes = (jadwal, sock, userId) => {
   if (scheduleJobs[userId]) {
-    scheduleJobs[userId].forEach(job => job.stop());
+    scheduleJobs[userId].forEach((job) => job.stop());
   }
   scheduleJobs[userId] = [];
 
   const scheduleTime = (time, prayerName) => {
-    const [hour, minute] = time.split(':');
+    const [hour, minute] = time.split(":");
     const cronExpression = `${minute} ${hour} * * *`;
-    const job = cron.schedule(cronExpression, () => {
-      sendMessage(sock, userId, time, prayerName);
-    }, {
-      timezone: "Asia/Jakarta"
-    });
+    const job = cron.schedule(
+      cronExpression,
+      () => {
+        sendMessage(sock, userId, time, prayerName);
+      },
+      {
+        timezone: "Asia/Jakarta",
+      }
+    );
     scheduleJobs[userId].push(job);
   };
 
@@ -119,18 +107,15 @@ const schedulePrayerTimes = (jadwal, sock, userId) => {
     { time: jadwal.dzuhur, name: "Dzuhur" },
     { time: jadwal.ashar, name: "Ashar" },
     { time: jadwal.maghrib, name: "Maghrib" },
-    { time: jadwal.isya, name: "Isya" }
+    { time: jadwal.isya, name: "Isya" },
   ];
 
-  prayerTimes.forEach(prayer => scheduleTime(prayer.time, prayer.name));
+  prayerTimes.forEach((prayer) => scheduleTime(prayer.time, prayer.name));
 };
 
 const initializeSchedules = async (sock) => {
   try {
-    const data = await fs.readFile(ListPath, "utf8");
-    const jadwalList = JSON.parse(data);
-    const currentDate = getFormattedDate();
-
+    const jadwalList = await Jadwal.find({});
     for (const item of jadwalList) {
       const jadwalBaru = await getNewSchedule(item.kota);
       if (jadwalBaru) {
@@ -146,7 +131,7 @@ const initializeSchedules = async (sock) => {
 
 const execute = async (sock, msg, args) => {
   const userId = msg.key.participant || msg.key.remoteJid;
-  
+
   if (args.length === 0) {
     const jadwalStatus = await getJadwalStatus(userId);
     if (jadwalStatus) {
@@ -162,7 +147,9 @@ const execute = async (sock, msg, args) => {
     return;
   }
 
-  const kota = listKota.find(k => k.lokasi.toLowerCase().includes(args[0].toLowerCase()));
+  const kota = listKota.find((k) =>
+    k.lokasi.toLowerCase().includes(args[0].toLowerCase())
+  );
 
   if (!kota) {
     await sock.sendMessage(userId, {
