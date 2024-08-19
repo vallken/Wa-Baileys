@@ -19,6 +19,7 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm
       - run: pnpm install
+      - run: npm install
       - run: node .
 
   publish-npm:
