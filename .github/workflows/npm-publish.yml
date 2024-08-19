@@ -36,3 +36,6 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           BASE_AI_URL: ${{ secrets.BASE_AI_URL }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+      - run: |
+          echo "Mongo URI is: $MONGO_URI"
