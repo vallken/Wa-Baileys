@@ -73,7 +73,7 @@ async function connectToWhatsApp() {
   });
 
   sock.ev.on("messages.upsert", async (m) => {
-    const msg = m.messages[0];
+    const msg = m.messages[0];    
     await afkPlugin.checkAfkMention(sock, msg);
     if (msg.key.fromMe) return; // Ignore self-messages
     if (msg.message) {

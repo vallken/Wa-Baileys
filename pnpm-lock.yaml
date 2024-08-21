@@ -38,6 +38,9 @@ importers:
       https-proxy-agent:
         specifier: ^7.0.5
         version: 7.0.5
+      mime-types:
+        specifier: ^2.1.35
+        version: 2.1.35
       mongoose:
         specifier: ^8.5.3
         version: 8.5.3(socks@2.8.3)

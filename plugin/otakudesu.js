@@ -4,8 +4,12 @@ const cheerio = require("cheerio");
 const execute = async (sock, msg, args) => {
   const from = msg.key.remoteJid;
 
-  if (args.length === 0) return;
-
+  if (args.length === 0) {
+    sock.sendMessage(from, {
+      text: "Masukkan 'terbaru' untuk mendapatkan anime terbaru, atau nama anime yang ingin Anda cari.",
+    });
+    return;
+  }
   try {
     if (args[0].toLowerCase() === "terbaru") {
       await fetchLatestAnime(sock, from);
