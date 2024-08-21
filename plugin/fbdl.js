@@ -108,13 +108,17 @@ const getFBInfo = (videoUrl, cookie, useragent) => {
 const execute = async function (sock, msg, args) {
   try {
     if (isValidURL(args[0])) {
+      try{
       const req = args[0];
       const res = await getFBInfo(req);
-      console.log(res);
       await sock.sendMessage(msg.key.remoteJid, {
-        video: { url: res.hd },
+        video: { url: res.hd ? res.hd : res.sd },
         caption: res.title,
-      });
+      });}
+      catch(e){
+        console.error(e);
+        sock.sendMessage(msg.key.remoteJid, { text: "Video tidak ditemukan." });
+      }
     } else if (!args) {
       sock.sendMessage(msg.key.remoteJid, { text: "Masukkan URL Facebook!" });
     } else {
