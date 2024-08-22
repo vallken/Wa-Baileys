@@ -67,7 +67,7 @@ module.exports = {
     name: "Tiktok Profile Check",
     description: "Scraping Tiktok Profile",
     command: "!ttstalk",
-    commandType: "downloader",
+    commandType: "Downloader",
     isDependent: false,
     help: `Gunakan !ttstalk <username>`,
     execute,

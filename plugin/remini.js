@@ -64,7 +64,7 @@ module.exports = {
   name: "Enhance Gambar Remini",
   description: "Enhance gambar menggunakan AI Remini",
   command: "!remini <link/gambar>",
-  commandType: "Steganography",
+  commandType: "Editor",
   isDependent: false,
   help: "Enhance gambar menggunakan AI Remini",
   execute,

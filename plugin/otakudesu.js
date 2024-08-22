@@ -4,12 +4,8 @@ const cheerio = require("cheerio");
 const execute = async (sock, msg, args) => {
   const from = msg.key.remoteJid;
 
-  if (args.length === 0) {
-    sock.sendMessage(from, {
-      text: "Masukkan 'terbaru' untuk mendapatkan anime terbaru, atau nama anime yang ingin Anda cari.",
-    });
-    return;
-  }
+  if (args.length === 0) return;
+
   try {
     if (args[0].toLowerCase() === "terbaru") {
       await fetchLatestAnime(sock, from);
@@ -38,19 +34,12 @@ const fetchLatestAnime = async (sock, from) => {
       if (!days[day]) days[day] = [];
 
       days[day].push(
-        `${$(element).find(".thumbz h2").text()} ${$(element)
-          .find(".epz")
-          .text()}`
+        `${$(element).find(".thumbz h2").text()} ${$(element).find(".epz").text()}`
       );
     });
 
     let text = Object.entries(days)
-      .map(
-        ([day, animes]) =>
-          `📅 ${day}:\n${animes
-            .map((anime, i) => `${i + 1}. ${anime}`)
-            .join("\n")}`
-      )
+      .map(([day, animes]) => `📅 ${day}:\n${animes.map((anime, i) => `${i + 1}. ${anime}`).join("\n")}`)
       .join("\n\n");
 
     sock.sendMessage(from, { text });
@@ -62,9 +51,7 @@ const fetchLatestAnime = async (sock, from) => {
 
 const searchAnime = async (sock, from, args) => {
   try {
-    const response = await axios.get(
-      `https://otakudesu.cloud/?s=${args.join(" ")}&post_type=anime`
-    );
+    const response = await axios.get(`https://otakudesu.cloud/?s=${args.join(" ")}&post_type=anime`);
     const $ = cheerio.load(response.data);
     const links = $("li h2 a");
 
@@ -105,27 +92,17 @@ const selectEpisode = async (sock, from, selectedJudul) => {
       return;
     }
 
-    let episodeArray = episodeList
-      .map((index, element) => {
-        const reversedIndex = episodeList.length - index;
-        return `${reversedIndex}. ${$(element).find("a").text()}`;
-      })
-      .get(); // Menggunakan .get() untuk mengembalikan array jQuery ke array JavaScript biasa
+    let episodeTitle = "Episode Ditemukan:\n";
+    episodeList.each((index, element) => {
+      episodeTitle += `${index + 1}. ${$(element).find("a").text()}\n`;
+    });
+    episodeTitle += "\nPilih Episode:";
 
-    // Membalik array agar urutannya terbalik
-    episodeArray.reverse();
+    sock.sendMessage(from, { text: episodeTitle });
 
-    let episodeTitleString = "Episode Ditemukan:\n" + episodeArray.join("\n");
-    episodeTitleString += "\nPilih Episode:";
-
-    sock.sendMessage(from, { text: episodeTitleString });
-
-    const selectedChoice = parseInt(await waitForResponse(sock, from), 10);
-
-    // Konversi pilihan pengguna ke indeks array yang sesuai
-    if (selectedChoice > 0 && selectedChoice <= episodeArray.length) {
-      const actualIndex = episodeList.length - selectedChoice;
-      const selectedEps = $(episodeList[actualIndex]).find("a").attr("href");
+    const selectedIndex = await waitForResponse(sock, from);
+    if (selectedIndex >= 0 && selectedIndex < episodeList.length) {
+      const selectedEps = $(episodeList[selectedIndex]).find("a").attr("href");
       await selectResolution(sock, from, selectedEps);
     } else {
       sock.sendMessage(from, { text: "Nomor tidak valid." });
@@ -174,42 +151,40 @@ const selectResolution = async (sock, from, selectedEps) => {
 };
 
 const waitForResponse = (sock, from) => {
-  return new Promise((resolve) => {
-    const listener = async (messageUpsert) => {
-      if (messageUpsert.type !== "notify") return;
-
-      const msg = messageUpsert.messages[0];
-      if (!msg) return;
-
-      if (msg.key && msg.key.remoteJid === from) {
-        let messageText = "";
-        if (msg.message) {
-          if (msg.message.conversation) {
-            messageText = msg.message.conversation;
-          } else if (msg.message.extendedTextMessage) {
-            messageText = msg.message.extendedTextMessage.text;
+    return new Promise((resolve) => {
+      const listener = async (messageUpsert) => {
+        if (messageUpsert.type !== 'notify') return;
+  
+        const msg = messageUpsert.messages[0];
+        if (!msg) return;
+  
+        if (msg.key && msg.key.remoteJid === from) {
+          let messageText = '';
+          if (msg.message) {
+            if (msg.message.conversation) {
+              messageText = msg.message.conversation;
+            } else if (msg.message.extendedTextMessage) {
+              messageText = msg.message.extendedTextMessage.text;
+            }
+          }
+  
+          if (messageText && !isNaN(messageText.trim())) {
+            clearTimeout(timeout);
+            sock.ev.off('messages.upsert', listener);
+            resolve(parseInt(messageText.trim()) - 1);
           }
         }
-
-        if (messageText && !isNaN(messageText.trim())) {
-          clearTimeout(timeout);
-          sock.ev.off("messages.upsert", listener);
-          resolve(parseInt(messageText.trim()) - 1);
-        }
-      }
-    };
-
-    sock.ev.on("messages.upsert", listener);
-
-    const timeout = setTimeout(() => {
-      sock.ev.off("messages.upsert", listener);
-      sock.sendMessage(from, {
-        text: "Waktu memilih habis. Silakan coba lagi.",
-      });
-      resolve(-1);
-    }, 60000);
-  });
-};
+      };
+  
+      sock.ev.on('messages.upsert', listener);
+  
+      const timeout = setTimeout(() => {
+        sock.ev.off('messages.upsert', listener);
+        sock.sendMessage(from, { text: "Waktu memilih habis. Silakan coba lagi." });
+        resolve(-1);
+      }, 60000);
+    });
+  };
 
 module.exports = {
   name: "Anime Download",

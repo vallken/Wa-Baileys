@@ -5,16 +5,31 @@ const execute = async (sock, msg, args) => {
   const commandsPath = path.join(__dirname, './');
   const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
-  let helpMessage = "Daftar perintah yang tersedia:\n\n";
+  let groupedCommands = {};
 
+  // Mengelompokkan perintah berdasarkan commandType
   for (const file of commandFiles) {
     const command = require(path.join(commandsPath, file));
-    if (command.name && command.description && command.command) {
-      helpMessage += `${command.command} - ${command.description}\n`;
+    if (command.name && command.description && command.command && command.commandType) {
+      if (!groupedCommands[command.commandType]) {
+        groupedCommands[command.commandType] = [];
+      }
+      groupedCommands[command.commandType].push(command);
     }
   }
 
-  helpMessage += "\nUntuk informasi lebih lanjut tentang perintah tertentu, ketik: !help <nama_perintah>";
+  let helpMessage = "Daftar perintah yang tersedia:\n\n";
+
+  // Menyusun pesan bantuan berdasarkan kelompok commandType
+  for (const [commandType, commands] of Object.entries(groupedCommands)) {
+    helpMessage += `=== ${commandType} ===\n`;
+    commands.forEach(command => {
+      helpMessage += `${command.command} - ${command.description}\n`;
+    });
+    helpMessage += '\n';
+  }
+
+  helpMessage += "Untuk informasi lebih lanjut tentang perintah tertentu, ketik: !help <nama_perintah>";
 
   await sock.sendMessage(msg.key.remoteJid, { text: helpMessage });
 };
@@ -37,7 +52,7 @@ const executeSpecific = async (sock, msg, args) => {
       if (command.help) {
         helpMessage += `Bantuan tambahan: ${command.help}\n`;
       }
-      
+
       await sock.sendMessage(msg.key.remoteJid, { text: helpMessage });
       return;
     }

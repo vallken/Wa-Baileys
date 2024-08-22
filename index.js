@@ -6,10 +6,11 @@ const {
 const { Boom } = require("@hapi/boom");
 const fs = require("fs");
 const path = require("path");
-const afkPlugin = require("./plugin/afk")
-const jadwalPlugin = require('./plugin/ingatkansholat')
-const express = require('express')
+const afkPlugin = require("./plugin/afk");
+const jadwalPlugin = require("./plugin/ingatkansholat");
+const express = require("express");
 const mongoose = require("mongoose");
+const Admin = require("./lib/db/admin");
 
 require("dotenv").config();
 
@@ -72,10 +73,62 @@ async function connectToWhatsApp() {
     }
   });
 
+  const debounce = (func, delay) => {
+    let inDebounce;
+    return function () {
+      const context = this;
+      const args = arguments;
+      clearTimeout(inDebounce);
+      inDebounce = setTimeout(() => func.apply(context, args), delay);
+    };
+  };
+
+  const processCommand = debounce(async (sock, msg, messageContent) => {
+    const args = messageContent.slice(1).trim().split(/ +/g);
+    const command = args.shift().toLowerCase();
+  
+    console.log({ command, args });
+    const userId = msg.key.participant
+      ? msg.key.participant
+      : msg.key.remoteJid;
+  
+    if (client.commands.has(command)) {
+      if (client.commands.get(command).commandType === "Admin") {
+        const admin = await Admin.findOne({ userId });
+        if (!admin || userId !== admin.userId) {
+          await sock.sendMessage(msg.key.remoteJid, {
+            text: "You don't have permission to use this command",
+          });
+          return;
+        } else {
+          console.log(`Command executed by ${userId}`);
+        }
+      }
+      try {
+        await sock.sendPresenceUpdate("composing", msg.key.remoteJid);
+        await sock.readMessages([msg.key]);
+        await client.commands.get(command).execute(sock, msg, args);
+      } catch (error) {
+        console.error("Error executing command:", error);
+        await sock.sendMessage(msg.key.remoteJid, {
+          text: "An error occurred while processing the command",
+        });
+      }
+    } else {
+      await sock.sendMessage(msg.key.remoteJid, {
+        text: "Command not found. Type .help to get a list of all commands",
+      });
+    }
+  }, 1000);
+  
+  let isProcessingCommand = false;
   sock.ev.on("messages.upsert", async (m) => {
-    const msg = m.messages[0];    
+    if (isProcessingCommand) return;
+    const msg = m.messages[0];
     await afkPlugin.checkAfkMention(sock, msg);
     if (msg.key.fromMe) return; // Ignore self-messages
+    
+    let messageContent = '';
     if (msg.message) {
       if (msg.message.conversation) {
         messageContent = msg.message.conversation;
@@ -86,28 +139,13 @@ async function connectToWhatsApp() {
       } else if (msg.message.videoMessage) {
         messageContent = msg.message.videoMessage.caption;
       }
+      
       if (messageContent.startsWith(",")) {
-        await sock.sendPresenceUpdate("composing", msg.key.remoteJid);
-        await sock.readMessages([msg.key]);
-
-        const args = messageContent.slice(1).trim().split(/ +/g);
-        const command = args.shift().toLowerCase();
-
-        console.log({ command, args });
-
-        if (client.commands.has(command)) {
-          try {
-            await client.commands.get(command).execute(sock, msg, args, m);
-          } catch (error) {
-            console.error("Error executing command:", error);
-            await sock.sendMessage(msg.key.remoteJid, {
-              text: "An error occurred while processing the command",
-            });
-          }
-        } else {
-          await sock.sendMessage(msg.key.remoteJid, {
-            text: "Command not found. Type .help to get a list of all commands",
-          });
+        isProcessingCommand = true;
+        try {
+          await processCommand(sock, msg, messageContent);
+        } finally {
+          isProcessingCommand = false;
         }
       }
     }

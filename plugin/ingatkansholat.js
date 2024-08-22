@@ -162,7 +162,7 @@ const execute = async (sock, msg, args) => {
     const jadwal = await getNewSchedule(kota.id);
     if (jadwal) {
       await setJadwalStatus(userId, kota.id, jadwal);
-      await sock.sendMessage(userId, {
+      await sock.sendMessage(msg.key.remoteJid, {
         text: `Anda sudah mendaftarkan jadwal sholat pada ${kota.lokasi}!`,
       });
       schedulePrayerTimes(jadwal, sock, userId);
@@ -178,7 +178,7 @@ const execute = async (sock, msg, args) => {
 };
 
 const scheduleDailyJobs = async (sock) => {
-  console.log("Menjadwalkan ulang tugas harian pada jam 01:00");
+  console.log("Menjadwalkan ulang tugas harian pada jam 08:00");
   await initializeSchedules(sock);
 };
 

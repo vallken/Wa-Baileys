@@ -4,12 +4,8 @@ const {
   useMultiFileAuthState,
 } = require("@whiskeysockets/baileys");
 const path = require("path");
-const fs = require("fs").promises;
-
-// Path ke file JSON yang menyimpan daftar AFK
 const afkModel = require("../lib/db/afk");
 
-// Fungsi untuk menyimpan status AFK ke JSON
 const setAfkStatus = async (userId, reason) => {
   try {
     await afkModel.findOneAndUpdate(
@@ -23,33 +19,26 @@ const setAfkStatus = async (userId, reason) => {
   }
 };
 
-// Fungsi untuk mendapatkan status AFK dari JSON
 const getAfkStatus = async (userId) => {
   try {
-    return await afkModel.findOne({ userId: userId });
+    return await afkModel.findOne({ userId });
   } catch (err) {
-    if (err.code === "ENOENT") return null;
     console.error("Error getting AFK status:", err);
     return null;
   }
 };
 
-// Fungsi untuk menghapus status AFK dari JSON
 const removeAfkStatus = async (userId) => {
   try {
-    afkModel.findOneAndDelete({ userId: userId });
+    await afkModel.findOneAndDelete({ userId });
     console.log(`AFK status removed for user ${userId}`);
   } catch (err) {
-    if (err.code !== "ENOENT") {
-      console.error("Error removing AFK status:", err);
-    }
+    console.error("Error removing AFK status:", err);
   }
 };
 
-// Fungsi untuk menghitung durasi AFK
 const getAfkDuration = (timestamp) => {
-  const now = new Date();
-  const diff = now - new Date(timestamp);
+  const diff = Date.now() - timestamp;
   const minutes = Math.floor(diff / 60000);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
@@ -59,15 +48,13 @@ const getAfkDuration = (timestamp) => {
   return `${minutes} menit`;
 };
 
-// Fungsi utama untuk menangani perintah AFK
 const execute = async (sock, msg, args) => {
-  const userId = msg.key.participant ? msg.key.participant : msg.key.remoteJid;
+  const userId = msg.key.participant || msg.key.remoteJid;
   const from = msg.key.remoteJid;
 
   if (args.length === 0) {
-    // Jika tidak ada argumen, cek apakah pengguna sedang AFK
     const afkStatus = await getAfkStatus(userId);
-    if (afkStatus) {
+    if (afkStatus && afkStatus.afk) {
       await removeAfkStatus(userId);
       await sock.sendMessage(from, {
         text: `Anda sudah tidak AFK lagi. Selamat datang kembali!`,
@@ -78,7 +65,6 @@ const execute = async (sock, msg, args) => {
       });
     }
   } else {
-    // Set status AFK
     const reason = args.join(" ");
     await setAfkStatus(userId, reason);
     await sock.sendMessage(from, {
@@ -89,44 +75,36 @@ const execute = async (sock, msg, args) => {
 
 const checkAfkMention = async (sock, msg) => {
   try {
-    const mentionedUser = msg.message?.extendedTextMessage?.contextInfo?.mentionedJid;
+    const mentionedUsers =
+      msg.message?.extendedTextMessage?.contextInfo?.mentionedJid || [];
+    const quoteAuthor =
+      msg.message?.extendedTextMessage?.contextInfo?.participant;
 
-    if (!Array.isArray(mentionedUser) || mentionedUser.length === 0) {
-      return; // Tidak ada user yang di-mention, keluar dari fungsi
-    }
+    // Hindari memeriksa pengirim pesan saat ini
+    const currentSender = msg.key.participant || msg.key.remoteJid;
 
-    let promises = [];
-    let quoteAuthor = msg.message?.extendedTextMessage?.contextInfo?.participant;
+    // Filter out currentSender dan hapus duplikat
+    const usersToCheck = [
+      ...new Set(
+        [...mentionedUsers, quoteAuthor].filter(
+          (user) => user !== msg.key.fromMe
+        )
+      ),
+    ];
 
-    // Jika pesan mengutip pesan lain, cek AFK dari pengutip
-    if (quoteAuthor && !msg.key.fromMe) {
-      promises.push(getAfkStatus(quoteAuthor));
-    }
+    if (usersToCheck.length === 0) return; // Keluar jika tidak ada user yang perlu diperiksa
 
-    // Loop untuk memeriksa semua user yang di-mention
-    for (const mention of mentionedUser) {
-      promises.push(getAfkStatus(mention));
-    }    
-    // Tunggu semua promises selesai    
-    const afkStatuses = await Promise.all(promises);
-    let mentions = quoteAuthor ? quoteAuthor : mentionedUser.join('');
-    
-    
+    const afkStatuses = await Promise.all(usersToCheck.map(getAfkStatus));
 
-    // Tampilkan pesan AFK untuk setiap status yang ditemukan
-    for (let i = 0; i < afkStatuses.length; i++) {
-      if (afkStatuses[i]) {
-        const afkStatus = afkStatuses[i];
+    for (let i = 0; i < usersToCheck.length; i++) {
+      const afkStatus = afkStatuses[i];
+      if (afkStatus && afkStatus.afk && !msg.key.fromMe) {
         const duration = getAfkDuration(afkStatus.timestamp);
-        let user = quoteAuthor ? quoteAuthor : mentionedUser;
-
-        if (user && typeof user === "string") {
-          user = user.replace("@s.whatsapp.net", "");
-          await sock.sendMessage(msg.key.remoteJid, {
-            text: `@${user} sedang AFK (${duration}).\nAlasan: ${afkStatus.reason}`,
-            mentions: [mentions],
-          });
-        }
+        const user = usersToCheck[i].replace("@s.whatsapp.net", "");
+        await sock.sendMessage(msg.key.remoteJid, {
+          text: `@${user} sedang AFK (${duration}).\nAlasan: ${afkStatus.reason}`,
+          mentions: [usersToCheck[i]],
+        });
       }
     }
   } catch (err) {
@@ -134,15 +112,13 @@ const checkAfkMention = async (sock, msg) => {
   }
 };
 
-
-
 module.exports = {
   name: "afk",
   description: "Set AFK status",
-  command: ".afk",
+  command: "!afk",
   commandType: "plugin",
   isDependent: false,
-  help: "Gunakan .afk <alasan> untuk mengatur status AFK Anda.",
+  help: "Gunakan !afk <alasan> untuk mengatur status AFK Anda.",
   execute,
-  checkAfkMention, // Ekspos fungsi ini untuk digunakan di event handler utama
+  checkAfkMention,
 };

@@ -66,7 +66,7 @@ module.exports = {
   name: "Zodiak Harian",
   description: "Ramalan Zodiak Harian Kamu",
   command: "!zodiak",
-  commandType: "info",
+  commandType: "Info",
   isDependent: false,
   help: "Ketik !zodiak [nama zodiak] untuk melihat ramalan harian. Contoh: !zodiak aries",
   execute,

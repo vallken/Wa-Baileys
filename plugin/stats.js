@@ -32,8 +32,8 @@ const execute = async (sock, msg, args) => {
 module.exports = {
     name: "Performance Stats",
     description: "Melihat statistik performa sistem",
-    command: "!performance",
-    commandType: "admin",
+    command: "!stats",
+    commandType: "Admin",
     isDependent: false,
     help: "Melihat statistik performa sistem.",
     execute,

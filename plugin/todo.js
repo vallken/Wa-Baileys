@@ -128,7 +128,7 @@ module.exports = {
   name: "Todo List",
   description: "Daftar tugas sederhana",
   command: "!todo",
-  commandType: "utility",
+  commandType: "Utility",
   isDependent: false,
   help: `Gunakan!todo <add|delete|update> [tugas]`,
   execute,

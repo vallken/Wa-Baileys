@@ -93,7 +93,7 @@ module.exports = {
   name: "Instagram Stories Downloader",
   description: "Download Story Dari Instagram",
   command: "!igstory",
-  commandType: "downloader",
+  commandType: "Downloader",
   isDependent: false,
   help: `ketik !igstory [username] untuk menggunakannya`,
   execute,

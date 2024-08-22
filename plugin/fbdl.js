@@ -136,7 +136,7 @@ module.exports = {
   name: "Facebook Downloader",
   description: "Download Video dari Facebook",
   command: "!fbdl",
-  commandType: "downloader",
+  commandType: "Downloader",
   isDependent: false,
   help: `ketik !fbdl [url] untuk menggunakannya`,
   execute,
