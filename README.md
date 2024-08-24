@@ -77,6 +77,3 @@ Proyek ini dilisensikan di bawah [MIT License](LICENSE).
 
 Untuk pertanyaan atau diskusi lebih lanjut, Anda dapat membuka [Issue di GitHub](https://github.com/vallken/Wa-Baileys/issues).
 
----
-
-Anda dapat menyesuaikan README ini sesuai dengan kebutuhan dan fitur yang tersedia di proyek Anda.
