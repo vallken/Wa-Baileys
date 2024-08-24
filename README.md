@@ -56,7 +56,7 @@ Sebelum memulai, pastikan Anda telah menginstal perangkat lunak berikut:
 ## Penggunaan
 
 - **Scan QR Code**: Pindai kode QR yang muncul di terminal menggunakan aplikasi WhatsApp Anda.
-- **Tambah Perintah Baru**: Untuk menambahkan perintah baru, edit file di folder `commands` sesuai dengan struktur yang ada.
+- **Tambah Perintah Baru**: Untuk menambahkan perintah baru, edit file di folder `plugin` sesuai dengan struktur yang ada.
 - **Mengatur Jadwal Pesan**: Gunakan file konfigurasi atau perintah bot untuk mengatur jadwal pengiriman pesan otomatis.
 
 ## Kontribusi
