@@ -141,7 +141,7 @@ const execute = async (sock, msg, args) => {
       });
     } else {
       sock.sendMessage(msg.key.remoteJid, {
-        text: "Masukkan nama kota!",
+        text: "Masukkan nama kota!, contoh: !ingatkansholat <nama_kota>",
       });
     }
     return;
@@ -178,11 +178,11 @@ const execute = async (sock, msg, args) => {
 };
 
 const scheduleDailyJobs = async (sock) => {
-  console.log("Menjadwalkan ulang tugas harian pada jam 08:00");
+  console.log("Menjadwalkan ulang tugas harian pada jam 01:00");
   await initializeSchedules(sock);
 };
 
-cron.schedule("0 8 * * *", () => scheduleDailyJobs(global.sock), {
+cron.schedule("0 1 * * *", () => scheduleDailyJobs(global.sock), {
   timezone: "Asia/Jakarta",
 });
 

@@ -8,6 +8,7 @@ const fs = require("fs");
 const path = require("path");
 const afkPlugin = require("./plugin/afk");
 const jadwalPlugin = require("./plugin/ingatkansholat");
+const agendaPlugin = require("./plugin/remind");
 const express = require("express");
 const mongoose = require("mongoose");
 const Admin = require("./lib/db/admin");
@@ -70,6 +71,7 @@ async function connectToWhatsApp() {
     } else if (connection === "open") {
       console.log("Connected to WhatsApp");
       jadwalPlugin.initializeSchedules(sock);
+      agendaPlugin.initializeSchedules(sock);
     }
   });
 
@@ -86,12 +88,12 @@ async function connectToWhatsApp() {
   const processCommand = debounce(async (sock, msg, messageContent) => {
     const args = messageContent.slice(1).trim().split(/ +/g);
     const command = args.shift().toLowerCase();
-  
+
     console.log({ command, args });
     const userId = msg.key.participant
       ? msg.key.participant
       : msg.key.remoteJid;
-  
+
     if (client.commands.has(command)) {
       if (client.commands.get(command).commandType === "Admin") {
         const admin = await Admin.findOne({ userId });
@@ -120,15 +122,15 @@ async function connectToWhatsApp() {
       });
     }
   }, 1000);
-  
+
   let isProcessingCommand = false;
   sock.ev.on("messages.upsert", async (m) => {
     if (isProcessingCommand) return;
     const msg = m.messages[0];
     await afkPlugin.checkAfkMention(sock, msg);
-    if (msg.key.fromMe) return; // Ignore self-messages
-    
-    let messageContent = '';
+    if (msg.key.fromMe) return;
+
+    let messageContent = "";
     if (msg.message) {
       if (msg.message.conversation) {
         messageContent = msg.message.conversation;
@@ -139,7 +141,7 @@ async function connectToWhatsApp() {
       } else if (msg.message.videoMessage) {
         messageContent = msg.message.videoMessage.caption;
       }
-      
+
       if (messageContent.startsWith(",")) {
         isProcessingCommand = true;
         try {

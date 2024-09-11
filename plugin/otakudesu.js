@@ -4,7 +4,9 @@ const cheerio = require("cheerio");
 const execute = async (sock, msg, args) => {
   const from = msg.key.remoteJid;
 
-  if (args.length === 0) return;
+  if (args.length === 0) {
+    return sock.sendMessage(from, {text: "Masukkan Perintah"})
+  }
 
   try {
     if (args[0].toLowerCase() === "terbaru") {
