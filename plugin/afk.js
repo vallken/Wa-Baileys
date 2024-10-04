@@ -1,9 +1,3 @@
-const {
-  default: makeWASocket,
-  DisconnectReason,
-  useMultiFileAuthState,
-} = require("@whiskeysockets/baileys");
-const path = require("path");
 const afkModel = require("../lib/db/afk");
 
 const setAfkStatus = async (userId, reason) => {
@@ -92,7 +86,7 @@ const checkAfkMention = async (sock, msg) => {
       ),
     ];
 
-    if (usersToCheck.length === 0) return; // Keluar jika tidak ada user yang perlu diperiksa
+    if (usersToCheck.length === 0) return;
 
     const afkStatuses = await Promise.all(usersToCheck.map(getAfkStatus));
 
@@ -115,7 +109,7 @@ const checkAfkMention = async (sock, msg) => {
 module.exports = {
   name: "afk",
   description: "Set AFK status",
-  command: "!afk",
+  command: `${global.prefix[1]}afk`,
   commandType: "plugin",
   isDependent: false,
   help: "Gunakan !afk <alasan> untuk mengatur status AFK Anda.",

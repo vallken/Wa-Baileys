@@ -14,6 +14,8 @@ const mongoose = require("mongoose");
 const Admin = require("./lib/db/admin");
 
 require("dotenv").config();
+global.prefix = [",", "!"];
+
 
 mongoose
   .connect(process.env.MONGO_URI)
@@ -141,8 +143,7 @@ async function connectToWhatsApp() {
       } else if (msg.message.videoMessage) {
         messageContent = msg.message.videoMessage.caption;
       }
-
-      if (messageContent.startsWith(",")) {
+      if (global.prefix.some((p) => messageContent.startsWith(p))) {
         isProcessingCommand = true;
         try {
           await processCommand(sock, msg, messageContent);
