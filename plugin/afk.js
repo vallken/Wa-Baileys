@@ -55,7 +55,7 @@ const execute = async (sock, msg, args) => {
       });
     } else {
       await sock.sendMessage(from, {
-        text: `Gunakan .afk <alasan> untuk mengatur status AFK Anda.`,
+        text: `Gunakan ${global.prefix[1]}afk <alasan> untuk mengatur status AFK Anda.`,
       });
     }
   } else {

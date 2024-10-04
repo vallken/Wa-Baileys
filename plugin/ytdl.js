@@ -181,7 +181,7 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Youtube Downloader",
   description: "Download video Youtube dengan kualitas yang diinginkan",
-  command: "!ytdl",
+  command: `${global.prefix[1]}!ytdl`,
   commandType: "Utility",
   isDependent: false,
   help: "Ketik !yt [link_video_youtube] untuk mengunduhnya",

@@ -65,7 +65,7 @@ ${angka}
 module.exports = {
   name: "Zodiak Harian",
   description: "Ramalan Zodiak Harian Kamu",
-  command: "!zodiak",
+  command: `${global.prefix[1]}!zodiak`,
   commandType: "Info",
   isDependent: false,
   help: "Ketik !zodiak [nama zodiak] untuk melihat ramalan harian. Contoh: !zodiak aries",

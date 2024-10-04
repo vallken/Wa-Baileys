@@ -1,3 +1,4 @@
+global.prefix = [",", "!"];
 const {
   default: makeWASocket,
   useMultiFileAuthState,
@@ -14,7 +15,6 @@ const mongoose = require("mongoose");
 const Admin = require("./lib/db/admin");
 
 require("dotenv").config();
-global.prefix = [",", "!"];
 
 
 mongoose

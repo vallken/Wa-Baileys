@@ -42,7 +42,7 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Tiktok Downloader",
   description: "Mendownload video dan gambar TikTok",
-  command: "!ttdl <url>",
+  command: `${global.prefix[1]}ttdl <url>`,
   commandType: "Downloader",
   isDependent: false,
   help: "Mendownload video dan gambar dari tiktok.",

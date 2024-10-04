@@ -74,8 +74,9 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Twitter Downloader",
   description: "Download Video / Gambar Twitter",
-  command: "!twitterdl <url>",
+  command: `${global.prefix[1]}twitterdl`,
   commandType: "Downloader",
   isDependent: false,
+  help: `Gunakan ${global.prefix[1]}twitterdl <link> `,
   execute,
 };

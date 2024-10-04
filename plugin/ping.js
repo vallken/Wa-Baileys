@@ -16,7 +16,7 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "ping",
   description: "Ping Pong Command",
-  command: "!ping",
+  command: `${global.prefix[1]}ping`,
   commandType: "Utility",
   isDependent: false,
   execute,

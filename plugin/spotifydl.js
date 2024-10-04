@@ -35,9 +35,9 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Spotify",
   description: "Mendownload musik Spotify",
-  command: "!spotifydl",
+  command: `${global.prefix[1]}spotifydl`,
   commandType: "Downloader",
   isDependent: false,
-  help: "Gunakan !spotifydl <artist name> <track name> ",
+  help: `unakan ${global.prefix[1]}spotifydl <artist name> <track name>`,
   execute,
 };

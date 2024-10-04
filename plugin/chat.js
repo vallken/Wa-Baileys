@@ -35,7 +35,7 @@ async function execute(sock, msg, args) {
 module.exports = {
   name: "Gemini AI",
   description: "Chat with Gemini AI",
-  command: "!chat",
+  command: `${global.prefix[1]}chat`,
   commandType: "Info",
   isDependent: false,
   help: "Just Chatting.",

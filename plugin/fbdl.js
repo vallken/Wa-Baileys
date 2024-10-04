@@ -135,9 +135,9 @@ const execute = async function (sock, msg, args) {
 module.exports = {
   name: "Facebook Downloader",
   description: "Download Video dari Facebook",
-  command: "!fbdl",
+  command: `${global.prefix[1]}fbdl`,
   commandType: "Downloader",
   isDependent: false,
-  help: `ketik !fbdl [url] untuk menggunakannya`,
+  help: `ketik ${global.prefix[1]}fbdl [url] untuk menggunakannya`,
   execute,
 };

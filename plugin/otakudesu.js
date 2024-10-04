@@ -5,7 +5,7 @@ const execute = async (sock, msg, args) => {
   const from = msg.key.remoteJid;
 
   if (args.length === 0) {
-    return sock.sendMessage(from, {text: "Masukkan Perintah"})
+    return sock.sendMessage(from, { text: "Masukkan Perintah" });
   }
 
   try {
@@ -36,12 +36,19 @@ const fetchLatestAnime = async (sock, from) => {
       if (!days[day]) days[day] = [];
 
       days[day].push(
-        `${$(element).find(".thumbz h2").text()} ${$(element).find(".epz").text()}`
+        `${$(element).find(".thumbz h2").text()} ${$(element)
+          .find(".epz")
+          .text()}`
       );
     });
 
     let text = Object.entries(days)
-      .map(([day, animes]) => `📅 ${day}:\n${animes.map((anime, i) => `${i + 1}. ${anime}`).join("\n")}`)
+      .map(
+        ([day, animes]) =>
+          `📅 ${day}:\n${animes
+            .map((anime, i) => `${i + 1}. ${anime}`)
+            .join("\n")}`
+      )
       .join("\n\n");
 
     sock.sendMessage(from, { text });
@@ -53,7 +60,9 @@ const fetchLatestAnime = async (sock, from) => {
 
 const searchAnime = async (sock, from, args) => {
   try {
-    const response = await axios.get(`https://otakudesu.cloud/?s=${args.join(" ")}&post_type=anime`);
+    const response = await axios.get(
+      `https://otakudesu.cloud/?s=${args.join(" ")}&post_type=anime`
+    );
     const $ = cheerio.load(response.data);
     const links = $("li h2 a");
 
@@ -153,47 +162,49 @@ const selectResolution = async (sock, from, selectedEps) => {
 };
 
 const waitForResponse = (sock, from) => {
-    return new Promise((resolve) => {
-      const listener = async (messageUpsert) => {
-        if (messageUpsert.type !== 'notify') return;
-  
-        const msg = messageUpsert.messages[0];
-        if (!msg) return;
-  
-        if (msg.key && msg.key.remoteJid === from) {
-          let messageText = '';
-          if (msg.message) {
-            if (msg.message.conversation) {
-              messageText = msg.message.conversation;
-            } else if (msg.message.extendedTextMessage) {
-              messageText = msg.message.extendedTextMessage.text;
-            }
-          }
-  
-          if (messageText && !isNaN(messageText.trim())) {
-            clearTimeout(timeout);
-            sock.ev.off('messages.upsert', listener);
-            resolve(parseInt(messageText.trim()) - 1);
+  return new Promise((resolve) => {
+    const listener = async (messageUpsert) => {
+      if (messageUpsert.type !== "notify") return;
+
+      const msg = messageUpsert.messages[0];
+      if (!msg) return;
+
+      if (msg.key && msg.key.remoteJid === from) {
+        let messageText = "";
+        if (msg.message) {
+          if (msg.message.conversation) {
+            messageText = msg.message.conversation;
+          } else if (msg.message.extendedTextMessage) {
+            messageText = msg.message.extendedTextMessage.text;
           }
         }
-      };
-  
-      sock.ev.on('messages.upsert', listener);
-  
-      const timeout = setTimeout(() => {
-        sock.ev.off('messages.upsert', listener);
-        sock.sendMessage(from, { text: "Waktu memilih habis. Silakan coba lagi." });
-        resolve(-1);
-      }, 60000);
-    });
-  };
+
+        if (messageText && !isNaN(messageText.trim())) {
+          clearTimeout(timeout);
+          sock.ev.off("messages.upsert", listener);
+          resolve(parseInt(messageText.trim()) - 1);
+        }
+      }
+    };
+
+    sock.ev.on("messages.upsert", listener);
+
+    const timeout = setTimeout(() => {
+      sock.ev.off("messages.upsert", listener);
+      sock.sendMessage(from, {
+        text: "Waktu memilih habis. Silakan coba lagi.",
+      });
+      resolve(-1);
+    }, 60000);
+  });
+};
 
 module.exports = {
   name: "Anime Download",
   description: "Download Anime Subtitle Indonesia",
-  command: "!otakudesu",
+  command: `${global.prefix[1]}otakudesu`,
   commandType: "plugin",
   isDependent: false,
-  help: "1. Ketik !anime <judul> untuk mencari link\n2. Ketik !anime terbaru untuk melihat informasi anime terbaru",
+  help: `1. Ketik ${global.prefix[1]}otakudesu <judul> untuk mencari link\n2. Ketik ${global.prefix[1]}otakudesu terbaru untuk melihat informasi anime terbaru`,
   execute,
 };

@@ -126,9 +126,9 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Instagram Downloader",
   description: "Mengunduh media Instagram",
-  command: "!igdl",
+  command: `${global.prefix[1]}igdl`,
   commandType: "Downloader",
   isDependent: false,
-  help: "Ketik !igdl [link_instagram] untuk mengunduhnya",
+  help: `Ketik ${global.prefix[1]}igdl [link_instagram] untuk mengunduhnya`,
   execute,
 };

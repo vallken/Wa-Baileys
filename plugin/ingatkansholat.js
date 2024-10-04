@@ -193,10 +193,10 @@ cron.schedule("0 1 * * *", () => scheduleDailyJobs(global.sock), {
 module.exports = {
   name: "Ingatkan Jadwal Sholat",
   description: "Membantu anda ingatkan jadwal sholat pada kota anda",
-  command: "!ingatkansholat",
+  command: `${global.prefix[1]}ingatkansholat`,
   commandType: "plugin",
   isDependent: false,
-  help: "Gunakan format ini: !ingatkansholat <nama_kota>",
+  help: `Gunakan format ini: ${global.prefix[1]}ingatkansholat <nama_kota>`,
   execute,
   initializeSchedules,
 };

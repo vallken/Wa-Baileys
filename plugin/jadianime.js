@@ -61,7 +61,7 @@ const execute = async (sock, msg, args) => {
 module.exports = {
     name: "AI Anime",
     description: "Mengubah gambar ke menjadi Anime",
-    command: "!jadianime",
+    command: `${global.prefix[1]}jadianime`,
     commandType: "plugin",
     isDependent: false,
     help: "Kirimkan Gambar / link untuk menjadi anime",

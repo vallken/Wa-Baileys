@@ -63,7 +63,7 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Enhance Gambar Remini",
   description: "Enhance gambar menggunakan AI Remini",
-  command: "!remini <link/gambar>",
+  command: `${global.prefix[1]}remini <link/gambar>`,
   commandType: "Editor",
   isDependent: false,
   help: "Enhance gambar menggunakan AI Remini",

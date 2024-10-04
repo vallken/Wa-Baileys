@@ -40,9 +40,9 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Jadwal Sholat",
   description: "Cari jadwal sholat di suatu kota",
-  command: "!jadwalsholat <nama kota>",
+  command: `${global.prefix[1]}jadwalsholat`,
   commandType: "plugin",
   isDependent: false,
-  help: "Gunakan format ini:!jadwalsholat <nama kota>",
+  help: `Gunakan format ini:${global.prefix[1]}jadwalsholat <nama kota>`,
   execute,
 };

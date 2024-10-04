@@ -150,14 +150,14 @@
   module.exports = {
     name: "Pengingat",
     description: "Menjadwalkan dan mengirim pesan pengingat",
-    command: "!remind",
+    command: `${global.prefix[1]}remind`,
     commandType: "Utility",
     isDependent: false,
     help:
-      "!remind [list|add|remove]\n" +
+      `${global.prefix[1]}remind [list|add|remove]\n` +
       "- list: Menampilkan daftar pengingat\n" +
-      "- add: !remind add dd/mm/yyyy jam:menit pesan\n" +
-      "- remove: !remind remove [nomor_tugas]",
+      `- add: ${global.prefix[1]}remind add dd/mm/yyyy jam:menit pesan\n` +
+      `- remove: ${global.prefix[1]}remind remove [nomor_tugas]`,
     execute,
     initializeSchedules,
   };

@@ -32,7 +32,7 @@ const execute = async (sock, msg, args) => {
 module.exports = {
     name: "Performance Stats",
     description: "Melihat statistik performa sistem",
-    command: "!stats",
+    command: `${global.prefix[1]}stats`,
     commandType: "Admin",
     isDependent: false,
     help: "Melihat statistik performa sistem.",

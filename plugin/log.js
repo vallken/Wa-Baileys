@@ -33,7 +33,7 @@ const execute = async (sock, msg, _) => {
 module.exports = {
   name: "Notification",
   description: "Logger",
-  command: "!log",
+  command: `${global.prefix[1]}log`,
   commandType: "Admin",
   isDependent: false,
   help: ``,

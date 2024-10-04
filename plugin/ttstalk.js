@@ -66,9 +66,9 @@ const execute = async (sock, msg, args) => {
 module.exports = {
     name: "Tiktok Profile Check",
     description: "Scraping Tiktok Profile",
-    command: "!ttstalk",
+    command: `${global.prefix[1]}ttstalk`,
     commandType: "Downloader",
     isDependent: false,
-    help: `Gunakan !ttstalk <username>`,
+    help: `Gunakan ${global.prefix[1]}ttstalk <username>`,
     execute,
   };

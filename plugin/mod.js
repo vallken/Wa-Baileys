@@ -63,9 +63,9 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Admin",
   description: "Kelola daftar admin WhatsApp",
-  command: "!mod",
+  command: `${global.prefix[1]}mod`,
   commandType: "Admin",
   isDependent: false,
-  help: `Gunakan!admin <add|remove|list> <username>`,
+  help: `Gunakan ${global.prefix[1]}admin <add|remove|list> <username>`,
   execute,
 };

@@ -117,7 +117,7 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Remove Background",
   description: "Menghapus background pada gambar",
-  command: "!removebg <link/gambar>",
+  command: `${global.prefix[1]}removebg`,
   commandType: "Editor",
   isDependent: false,
   help: "Menghapus background pada gambar yang diberikan.",

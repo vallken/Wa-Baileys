@@ -32,7 +32,7 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Admin",
   description: "Cek Gacha",
-  command: "!cek",
+  command: `${global.prefix[1]}cek`,
   commandType: "Admin",
   isDependent: false,
   help: ``,

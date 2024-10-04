@@ -127,9 +127,9 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Todo List",
   description: "Daftar tugas sederhana",
-  command: "!todo",
+  command: `${global.prefix[1]}todo`,
   commandType: "Utility",
   isDependent: false,
-  help: `Gunakan!todo <add|delete|update> [tugas]`,
+  help: `Gunakan ${global.prefix[1]}todo <add|delete|update> [tugas]`,
   execute,
 };

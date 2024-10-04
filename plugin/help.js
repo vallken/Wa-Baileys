@@ -64,9 +64,9 @@ const executeSpecific = async (sock, msg, args) => {
 module.exports = {
   name: "Help",
   description: "Menampilkan daftar perintah atau informasi tentang perintah tertentu",
-  command: "!help [nama_perintah]",
+  command: `${global.prefix[1]}help [nama perintah]`,
   commandType: "Utility",
   isDependent: false,
-  help: "Gunakan !help untuk melihat daftar semua perintah, atau !help <nama_perintah> untuk informasi detail tentang perintah tertentu.",
+  help: `Gunakan ${global.prefix[1]}help untuk melihat daftar semua perintah, atau !help <nama_perintah> untuk informasi detail tentang perintah tertentu.`,
   execute: executeSpecific,
 };
