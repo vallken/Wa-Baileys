@@ -146,7 +146,7 @@ const execute = async (sock, msg, args) => {
           startTime,
           endTime
         );
-        sock.sendMessage(from, { text: "tunggu sebentar..." });
+        sock.sendMessage(from, { text: "tunggu sebentar...." });
         await sock.sendMessage(from, { video: croppedBuffer });
       } catch (error) {
         console.error("Error in cropping:", error);
@@ -181,9 +181,9 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Youtube Downloader",
   description: "Download video Youtube dengan kualitas yang diinginkan",
-  command: `${global.prefix[1]}!ytdl`,
+  command: `${global.prefix[1]}ytdl`,
   commandType: "Utility",
   isDependent: false,
-  help: "Ketik !yt [link_video_youtube] untuk mengunduhnya",
+  help: `\nKetik ${global.prefix[1]}yt [link_video_youtube] untuk mengunduhnya`,
   execute,
 };

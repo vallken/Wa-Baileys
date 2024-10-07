@@ -56,7 +56,7 @@
         JSON.parse(cookiesContent)
         );
         const quality = QUALITY_MAP[qualityIndex] || QUALITY_MAP[2];
-        const info = await ytdl.getInfo(link, { agent: agent });
+        const info = await ytdl.getInfo(link);
 
         if (quality === "bitrateList") {
         return getBitrateList(info);

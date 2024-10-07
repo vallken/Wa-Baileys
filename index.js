@@ -1,26 +1,19 @@
-global.prefix = [",", "!"];
-const {
-  default: makeWASocket,
-  useMultiFileAuthState,
-  DisconnectReason,
-} = require("@whiskeysockets/baileys");
+require('dotenv').config();
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys");
 const { Boom } = require("@hapi/boom");
-const fs = require("fs");
+const fs = require("fs").promises;
 const path = require("path");
-const afkPlugin = require("./plugin/afk");
-const jadwalPlugin = require("./plugin/ingatkansholat");
-const agendaPlugin = require("./plugin/remind");
 const express = require("express");
 const mongoose = require("mongoose");
 const Admin = require("./lib/db/admin");
+const logger = require('./utils/logger');
 
-require("dotenv").config();
+global.prefix = [",", "!", ".", "?"];
+console.log = (...args) => logger.info(args.length > 1 ? args : args[0]);
+console.info = (...args) => logger.info(args.length > 1 ? args : args[0]);
+console.warn = (...args) => logger.warn(args.length > 1 ? args : args[0]);
+console.error = (...args) => logger.error(args.length > 1 ? args : args[0]);
 
-
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.error("Could not connect to MongoDB:", err));
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -28,22 +21,93 @@ const client = {
   commands: new Map(),
 };
 
-// Load plugins
-const pluginDir = path.join(__dirname, "plugin");
-fs.readdir(pluginDir, (err, files) => {
-  if (err) return console.error("Error reading plugin directory:", err);
-  files.forEach((commandFile) => {
-    if (commandFile.endsWith(".js")) {
-      const commandName = commandFile.replace(".js", "");
-      const commandPath = path.join(pluginDir, commandFile);
-      try {
-        const command = require(commandPath);
-        client.commands.set(commandName, command);
-        console.log(`Loaded plugin: ${commandName}`);
-      } catch (error) {
-        console.error(`Error loading plugin ${commandName}:`, error);
+let connectionStatus = "disconnected";
+let processedMessages = 0;
+const loadedPlugins = [];
+
+async function connectToDatabase() {
+  try {
+    await mongoose.connect(process.env.MONGO_URI);
+    logger.info("Connected to MongoDB");
+  } catch (err) {
+    logger.error("Could not connect to MongoDB:", err);
+    process.exit(1);
+  }
+}
+
+async function loadPlugins() {
+  const pluginDir = path.join(__dirname, "plugin");
+  try {
+    const files = await fs.readdir(pluginDir);
+    for (const commandFile of files) {
+      if (commandFile.endsWith(".js")) {
+        const commandName = commandFile.replace(".js", "");
+        const commandPath = path.join(pluginDir, commandFile);
+        try {
+          const command = require(commandPath);
+          client.commands.set(commandName, command);
+          loadedPlugins.push(commandName);
+          logger.info(`Loaded plugin: ${commandName}`);
+        } catch (error) {
+          logger.error(`Error loading plugin ${commandName}:`, error);
+        }
       }
     }
+  } catch (err) {
+    logger.error("Error reading plugin directory:", err);
+  }
+}
+
+client.commands.set('reload', {
+  commandType: "Admin",
+  execute: async (sock, msg, args) => {
+    const pluginName = args[0];
+    const commandPath = path.join(__dirname, "plugin", `${pluginName}.js`);
+    
+    if (client.commands.has(pluginName)) {
+      delete require.cache[require.resolve(commandPath)];
+      try {
+        const newCommand = require(commandPath);
+        client.commands.set(pluginName, newCommand);
+        await sock.sendMessage(msg.key.remoteJid, { text: `Plugin ${pluginName} berhasil di-reload` });
+        logger.info(`Plugin ${pluginName} reloaded`);
+      } catch (error) {
+        logger.error(`Error reloading plugin ${pluginName}:`, error);
+        await sock.sendMessage(msg.key.remoteJid, { text: `Gagal reload plugin ${pluginName}: ${error.message}` });
+      }
+    } else {
+      await sock.sendMessage(msg.key.remoteJid, { text: `Plugin ${pluginName} tidak ditemukan` });
+    }
+  }
+});
+
+async function watchPlugins() {
+  const pluginDir = path.join(__dirname, "plugin");
+  fs.watch(pluginDir, (eventType, filename) => {
+    if ((eventType === 'change' || eventType === 'rename') && filename.endsWith('.js')) {
+      const pluginName = filename.replace(".js", "");
+      const commandPath = path.join(pluginDir, filename);
+
+      if (client.commands.has(pluginName)) {
+        delete require.cache[require.resolve(commandPath)];
+        try {
+          const newCommand = require(commandPath);
+          client.commands.set(pluginName, newCommand);
+          logger.info(`Plugin ${pluginName} reloaded automatically`);
+        } catch (error) {
+          logger.error(`Error reloading plugin ${pluginName}:`, error);
+        }
+      }
+    }
+  });
+}
+
+app.get("/status", (req, res) => {
+  res.json({
+    status: connectionStatus,
+    processedMessages: processedMessages,
+    loadedPlugins: Array.from(client.commands.keys()),
+    commandsLoaded: client.commands.size
   });
 });
 
@@ -61,19 +125,21 @@ async function connectToWhatsApp() {
       const shouldReconnect =
         lastDisconnect.error instanceof Boom &&
         lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut;
-      console.log(
+      logger.info(
         "Connection closed due to ",
         lastDisconnect.error,
         ", reconnecting ",
         shouldReconnect
       );
+      connectionStatus = "disconnected";
       if (shouldReconnect) {
         connectToWhatsApp();
       }
     } else if (connection === "open") {
-      console.log("Connected to WhatsApp");
-      jadwalPlugin.initializeSchedules(sock);
-      agendaPlugin.initializeSchedules(sock);
+      logger.info("Connected to WhatsApp");
+      connectionStatus = "connected";
+      require("./plugin/ingatkansholat").initializeSchedules(sock);
+      require("./plugin/remind").initializeSchedules(sock);
     }
   });
 
@@ -91,7 +157,7 @@ async function connectToWhatsApp() {
     const args = messageContent.slice(1).trim().split(/ +/g);
     const command = args.shift().toLowerCase();
 
-    console.log({ command, args });
+    logger.debug({ command, args });
     const userId = msg.key.participant
       ? msg.key.participant
       : msg.key.remoteJid;
@@ -105,7 +171,7 @@ async function connectToWhatsApp() {
           });
           return;
         } else {
-          console.log(`Command executed by ${userId}`);
+          logger.info(`Command executed by ${userId}`);
         }
       }
       try {
@@ -113,7 +179,7 @@ async function connectToWhatsApp() {
         await sock.readMessages([msg.key]);
         await client.commands.get(command).execute(sock, msg, args);
       } catch (error) {
-        console.error("Error executing command:", error);
+        logger.error("Error executing command:", error);
         await sock.sendMessage(msg.key.remoteJid, {
           text: "An error occurred while processing the command",
         });
@@ -129,7 +195,7 @@ async function connectToWhatsApp() {
   sock.ev.on("messages.upsert", async (m) => {
     if (isProcessingCommand) return;
     const msg = m.messages[0];
-    await afkPlugin.checkAfkMention(sock, msg);
+    await require("./plugin/afk").checkAfkMention(sock, msg);
     if (msg.key.fromMe) return;
 
     let messageContent = "";
@@ -157,13 +223,22 @@ async function connectToWhatsApp() {
   sock.ev.on("creds.update", saveCreds);
 }
 
-// Run in main file
-connectToWhatsApp();
+async function main() {
+  await connectToDatabase();
+  await loadPlugins();
+  await watchPlugins();
+  connectToWhatsApp();
 
-app.get("/", (req, res) => {
-  res.send("Baileys Bot is running");
-});
+  app.get("/", (req, res) => {
+    res.send("Baileys Bot is running");
+  });
 
-app.listen(port, () => {
-  console.log(`Server is listening on port ${port}`);
+  app.listen(port, () => {
+    logger.info(`Server is listening on port ${port}`);
+  });
+}
+
+main().catch((error) => {
+  logger.error("Fatal error:", error);
+  process.exit(1);
 });

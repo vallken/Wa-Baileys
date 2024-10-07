@@ -87,6 +87,6 @@ module.exports = {
   command: `${global.prefix[1]}searchanime`,
   commandType: "plugin",
   isDependent: false,
-  help: `Kirimkan Gambar Scene Anime / Gunakan ${global.prefic[1]}searchanime <url> untuk mencari scene anime`,
+  help: `Kirimkan Gambar Scene Anime / Gunakan ${global.prefix[1]}searchanime <url> untuk mencari scene anime`,
   execute,
 };
