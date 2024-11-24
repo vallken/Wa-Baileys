@@ -1,3 +1,4 @@
+// Load environment variables and dependencies
 require('dotenv').config();
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys");
 const { Boom } = require("@hapi/boom");
@@ -7,24 +8,28 @@ const express = require("express");
 const mongoose = require("mongoose");
 const Admin = require("./lib/db/admin");
 const logger = require('./utils/logger');
+const {checkAndExecuteAlias} = require("./plugin/alias")
+const config = require('./config'); 
 
-global.prefix = [",", "!", ".", "?"];
+// Override console methods with logger
 console.log = (...args) => logger.info(args.length > 1 ? args : args[0]);
 console.info = (...args) => logger.info(args.length > 1 ? args : args[0]);
 console.warn = (...args) => logger.warn(args.length > 1 ? args : args[0]);
 console.error = (...args) => logger.error(args.length > 1 ? args : args[0]);
 
-
+// Initialize Express app
 const app = express();
 const port = process.env.PORT || 3000;
+
+// Initialize client state
 const client = {
   commands: new Map(),
 };
 
 let connectionStatus = "disconnected";
 let processedMessages = 0;
-const loadedPlugins = [];
 
+// Database connection
 async function connectToDatabase() {
   try {
     await mongoose.connect(process.env.MONGO_URI);
@@ -35,6 +40,7 @@ async function connectToDatabase() {
   }
 }
 
+// Plugin management
 async function loadPlugins() {
   const pluginDir = path.join(__dirname, "plugin");
   try {
@@ -46,7 +52,6 @@ async function loadPlugins() {
         try {
           const command = require(commandPath);
           client.commands.set(commandName, command);
-          loadedPlugins.push(commandName);
           logger.info(`Loaded plugin: ${commandName}`);
         } catch (error) {
           logger.error(`Error loading plugin ${commandName}:`, error);
@@ -58,49 +63,157 @@ async function loadPlugins() {
   }
 }
 
-client.commands.set('reload', {
-  commandType: "Admin",
-  execute: async (sock, msg, args) => {
-    const pluginName = args[0];
-    const commandPath = path.join(__dirname, "plugin", `${pluginName}.js`);
-    
-    if (client.commands.has(pluginName)) {
-      delete require.cache[require.resolve(commandPath)];
-      try {
-        const newCommand = require(commandPath);
-        client.commands.set(pluginName, newCommand);
-        await sock.sendMessage(msg.key.remoteJid, { text: `Plugin ${pluginName} berhasil di-reload` });
-        logger.info(`Plugin ${pluginName} reloaded`);
-      } catch (error) {
-        logger.error(`Error reloading plugin ${pluginName}:`, error);
-        await sock.sendMessage(msg.key.remoteJid, { text: `Gagal reload plugin ${pluginName}: ${error.message}` });
-      }
-    } else {
-      await sock.sendMessage(msg.key.remoteJid, { text: `Plugin ${pluginName} tidak ditemukan` });
-    }
+
+// Message handling
+const debounce = (func, delay) => {
+  let inDebounce;
+  return function () {
+    const context = this;
+    const args = arguments;
+    clearTimeout(inDebounce);
+    inDebounce = setTimeout(() => func.apply(context, args), delay);
+  };
+};
+
+async function handleCommand(sock, msg, messageContent) {
+  const args = messageContent.slice(1).trim().split(/ +/g);
+  const command = args.shift().toLowerCase();
+  const userId = msg.key.participant ? msg.key.participant : msg.key.remoteJid;
+
+  logger.debug({ command, args });
+
+  if (!client.commands.has(command)) {
+    await sock.sendMessage(msg.key.remoteJid, {
+      text: `Command not found. Type ${config.prefix[1]}help to get a list of all commands`,
+    });
+    return;
   }
-});
 
-async function watchPlugins() {
-  const pluginDir = path.join(__dirname, "plugin");
-  fs.watch(pluginDir, (eventType, filename) => {
-    if ((eventType === 'change' || eventType === 'rename') && filename.endsWith('.js')) {
-      const pluginName = filename.replace(".js", "");
-      const commandPath = path.join(pluginDir, filename);
+  const commandHandler = client.commands.get(command);
+  
+  // Check admin permissions
+  if (commandHandler.commandType === "Admin") {
+    const admin = await Admin.findOne({ userId });
+    if (!admin || userId !== admin.userId) {
+      await sock.sendMessage(msg.key.remoteJid, {
+        text: "You don't have permission to use this command",
+      });
+      return;
+    }
+    logger.info(`Command executed by ${userId}`);
+  }
 
-      if (client.commands.has(pluginName)) {
-        delete require.cache[require.resolve(commandPath)];
-        try {
-          const newCommand = require(commandPath);
-          client.commands.set(pluginName, newCommand);
-          logger.info(`Plugin ${pluginName} reloaded automatically`);
-        } catch (error) {
-          logger.error(`Error reloading plugin ${pluginName}:`, error);
-        }
+  try {
+    await sock.sendPresenceUpdate("composing", msg.key.remoteJid);
+    await sock.readMessages([msg.key]);
+    await commandHandler.execute(sock, msg, args);
+  } catch (error) {
+    logger.error("Error executing command:", error);
+    await sock.sendMessage(msg.key.remoteJid, {
+      text: "An error occurred while processing the command",
+    });
+  }
+}
+
+const processCommand = debounce(handleCommand, 1000);
+
+// WhatsApp connection handling
+async function connectToWhatsApp() {
+  const { state, saveCreds } = await useMultiFileAuthState("auth_info_baileys");
+
+  const sock = makeWASocket({
+    auth: state,
+    printQRInTerminal: true,
+  });
+
+  // Connection event handler
+  sock.ev.on("connection.update", (update) => {
+    const { connection, lastDisconnect } = update;
+    if (connection === "close") {
+      const shouldReconnect =
+        lastDisconnect.error instanceof Boom &&
+        lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut;
+      
+      logger.info(
+        "Connection closed due to ",
+        lastDisconnect.error,
+        ", reconnecting ",
+        shouldReconnect
+      );
+      
+      connectionStatus = "disconnected";
+      
+      if (shouldReconnect) {
+        connectToWhatsApp();
       }
+    } else if (connection === "open") {
+      logger.info("Connected to WhatsApp");
+      connectionStatus = "connected";
+      
+      // Initialize scheduled tasks
+      require("./plugin/ingatkansholat").initializeSchedules(sock);
+      require("./plugin/remind").initializeSchedules(sock);
     }
   });
+
+  // Message event handler
+  let isProcessingCommand = false;
+  sock.ev.on("messages.upsert", async (m) => {
+    if (isProcessingCommand) return;
+    
+    const msg = m.messages[0];
+    if (msg.key.fromMe) return;
+
+    await require("./plugin/afk").checkAfkMention(sock, msg);
+
+    const messageContent = extractMessageContent(msg);
+    
+    if (!messageContent) return;
+
+    // Check if message starts with a command prefix
+    if (config.prefix.some((p) => messageContent.startsWith(p))) {
+      isProcessingCommand = true;
+      try {
+        await processCommand(sock, msg, messageContent);
+      } finally {
+        isProcessingCommand = false;
+      }
+      return;
+    }
+
+    // If no command prefix, check for alias
+    const aliasExecuted = await checkAndExecuteAlias(sock, msg, messageContent);
+    if (aliasExecuted) {
+      processedMessages++;
+    }
+  });
+
+  sock.ev.on("creds.update", saveCreds);
 }
+
+// Helper function to extract message content
+function extractMessageContent(msg) {
+  if (!msg.message) return null;
+
+  if (msg.message.conversation) {
+    return msg.message.conversation;
+  }
+  if (msg.message.extendedTextMessage) {
+    return msg.message.extendedTextMessage.text;
+  }
+  if (msg.message.imageMessage) {
+    return msg.message.imageMessage.caption;
+  }
+  if (msg.message.videoMessage) {
+    return msg.message.videoMessage.caption;
+  }
+  return null;
+}
+
+// Express routes
+app.get("/", (req, res) => {
+  res.send("Baileys Bot is running");
+});
 
 app.get("/status", (req, res) => {
   res.json({
@@ -111,134 +224,20 @@ app.get("/status", (req, res) => {
   });
 });
 
-async function connectToWhatsApp() {
-  const { state, saveCreds } = await useMultiFileAuthState("auth_info_baileys");
-
-  const sock = makeWASocket({
-    auth: state,
-    printQRInTerminal: true,
-  });
-
-  sock.ev.on("connection.update", (update) => {
-    const { connection, lastDisconnect } = update;
-    if (connection === "close") {
-      const shouldReconnect =
-        lastDisconnect.error instanceof Boom &&
-        lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut;
-      logger.info(
-        "Connection closed due to ",
-        lastDisconnect.error,
-        ", reconnecting ",
-        shouldReconnect
-      );
-      connectionStatus = "disconnected";
-      if (shouldReconnect) {
-        connectToWhatsApp();
-      }
-    } else if (connection === "open") {
-      logger.info("Connected to WhatsApp");
-      connectionStatus = "connected";
-      require("./plugin/ingatkansholat").initializeSchedules(sock);
-      require("./plugin/remind").initializeSchedules(sock);
-    }
-  });
-
-  const debounce = (func, delay) => {
-    let inDebounce;
-    return function () {
-      const context = this;
-      const args = arguments;
-      clearTimeout(inDebounce);
-      inDebounce = setTimeout(() => func.apply(context, args), delay);
-    };
-  };
-
-  const processCommand = debounce(async (sock, msg, messageContent) => {
-    const args = messageContent.slice(1).trim().split(/ +/g);
-    const command = args.shift().toLowerCase();
-
-    logger.debug({ command, args });
-    const userId = msg.key.participant
-      ? msg.key.participant
-      : msg.key.remoteJid;
-
-    if (client.commands.has(command)) {
-      if (client.commands.get(command).commandType === "Admin") {
-        const admin = await Admin.findOne({ userId });
-        if (!admin || userId !== admin.userId) {
-          await sock.sendMessage(msg.key.remoteJid, {
-            text: "You don't have permission to use this command",
-          });
-          return;
-        } else {
-          logger.info(`Command executed by ${userId}`);
-        }
-      }
-      try {
-        await sock.sendPresenceUpdate("composing", msg.key.remoteJid);
-        await sock.readMessages([msg.key]);
-        await client.commands.get(command).execute(sock, msg, args);
-      } catch (error) {
-        logger.error("Error executing command:", error);
-        await sock.sendMessage(msg.key.remoteJid, {
-          text: "An error occurred while processing the command",
-        });
-      }
-    } else {
-      await sock.sendMessage(msg.key.remoteJid, {
-        text: "Command not found. Type .help to get a list of all commands",
-      });
-    }
-  }, 1000);
-
-  let isProcessingCommand = false;
-  sock.ev.on("messages.upsert", async (m) => {
-    if (isProcessingCommand) return;
-    const msg = m.messages[0];
-    await require("./plugin/afk").checkAfkMention(sock, msg);
-    if (msg.key.fromMe) return;
-
-    let messageContent = "";
-    if (msg.message) {
-      if (msg.message.conversation) {
-        messageContent = msg.message.conversation;
-      } else if (msg.message.extendedTextMessage) {
-        messageContent = msg.message.extendedTextMessage.text;
-      } else if (msg.message.imageMessage) {
-        messageContent = msg.message.imageMessage.caption;
-      } else if (msg.message.videoMessage) {
-        messageContent = msg.message.videoMessage.caption;
-      }
-      if (global.prefix.some((p) => messageContent.startsWith(p))) {
-        isProcessingCommand = true;
-        try {
-          await processCommand(sock, msg, messageContent);
-        } finally {
-          isProcessingCommand = false;
-        }
-      }
-    }
-  });
-
-  sock.ev.on("creds.update", saveCreds);
-}
-
+// Main application startup
 async function main() {
-  await connectToDatabase();
-  await loadPlugins();
-  await watchPlugins();
-  connectToWhatsApp();
+  try {
+    await connectToDatabase();
+    await loadPlugins();
+    connectToWhatsApp();
 
-  app.get("/", (req, res) => {
-    res.send("Baileys Bot is running");
-  });
-
-  app.listen(port, () => {
-    logger.info(`Server is listening on port ${port}`);
-  });
+    app.listen(port, () => {
+      logger.info(`Server is listening on port ${port}`);
+    });
+  } catch (error) {
+    logger.error("Fatal error:", error);
+    process.exit(1);
+  }
 }
 
-main().catch((error) => {
-  logger.error("Fatal error:", error);
-  process.exit(1);
-});
+main();

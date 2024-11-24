@@ -1,5 +1,7 @@
 const axios = require("axios");
 require('dotenv').config()
+const config = require('../config'); 
+
 
 
 const url = `${process.env.BASE_AI_URL}/tools/twitterdl?url=`
@@ -74,9 +76,9 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Twitter Downloader",
   description: "Download Video / Gambar Twitter",
-  command: `${global.prefix[1]}twitterdl`,
+  command: `${config.prefix[1]}twitterdl`,
   commandType: "Downloader",
   isDependent: false,
-  help: `Gunakan ${global.prefix[1]}twitterdl <link> `,
+  help: `Gunakan ${config.prefix[1]}twitterdl <link> `,
   execute,
 };

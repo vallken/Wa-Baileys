@@ -7,8 +7,6 @@
     const axios = require("axios");
     const { join } = require("path");
 
-    const cookiesPath = path.join(__dirname, "cookies.json");
-    const cookiesContent = fs.readFileSync(cookiesPath, "utf8");
     const tempDir = os.tmpdir();
 
     const QUALITY_MAP = {

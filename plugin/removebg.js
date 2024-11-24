@@ -3,6 +3,8 @@ require("dotenv").config();
 const { downloadMediaMessage } = require("@whiskeysockets/baileys");
 const axios = require("axios");
 const mime = require("mime-types");
+const config = require('../config'); 
+
 
 const api = process.env.REMOVE_URI;
 async function removeUrl(imageURL) {
@@ -117,7 +119,7 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Remove Background",
   description: "Menghapus background pada gambar",
-  command: `${global.prefix[1]}removebg`,
+  command: `${config.prefix[1]}removebg`,
   commandType: "Editor",
   isDependent: false,
   help: "Menghapus background pada gambar yang diberikan.",

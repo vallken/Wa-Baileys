@@ -1,5 +1,7 @@
 const axios = require("axios");
 const { downloadMediaMessage } = require("@whiskeysockets/baileys");
+const config = require('../config'); 
+
 
 function convertToTime(seconds) {
   const hrs = Math.floor(seconds / 3600);
@@ -84,9 +86,9 @@ ${(result.similarity * 100).toFixed(2)}% Similarity
 module.exports = {
   name: "Search Anime",
   description: "Search Anime Scene",
-  command: `${global.prefix[1]}searchanime`,
+  command: `${config.prefix[1]}searchanime`,
   commandType: "plugin",
   isDependent: false,
-  help: `Kirimkan Gambar Scene Anime / Gunakan ${global.prefix[1]}searchanime <url> untuk mencari scene anime`,
+  help: `Kirimkan Gambar Scene Anime / Gunakan ${config.prefix[1]}searchanime <url> untuk mencari scene anime`,
   execute,
 };

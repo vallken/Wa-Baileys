@@ -1,4 +1,6 @@
 const getInfo = require("../helper/tiktokStalk");
+const config = require('../config'); 
+
 
 const getFlagEmoji = (countryCode) => {
   return countryCode
@@ -66,9 +68,9 @@ const execute = async (sock, msg, args) => {
 module.exports = {
     name: "Tiktok Profile Check",
     description: "Scraping Tiktok Profile",
-    command: `${global.prefix[1]}ttstalk`,
+    command: `${config.prefix[1]}ttstalk`,
     commandType: "Downloader",
     isDependent: false,
-    help: `Gunakan ${global.prefix[1]}ttstalk <username>`,
+    help: `Gunakan ${config.prefix[1]}ttstalk <username>`,
     execute,
   };

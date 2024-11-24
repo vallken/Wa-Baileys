@@ -1,6 +1,8 @@
 const fs = require("fs");
 const path = require("path");
 const waMessagePath = path.join(__dirname, "../python/", "logging.log");
+const config = require('../config'); 
+
 
 const send_wa_message = async (sock, from) => {
   try {
@@ -33,7 +35,7 @@ const execute = async (sock, msg, _) => {
 module.exports = {
   name: "Notification",
   description: "Logger",
-  command: `${global.prefix[1]}log`,
+  command: `${config.prefix[1]}log`,
   commandType: "Admin",
   isDependent: false,
   help: ``,

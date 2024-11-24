@@ -81,26 +81,23 @@ const MusicalDown = (url) =>
           });
         let i = 1;
         let videos = {};
-        $("div[class='col s12 l8'] > a")
-          .get()
-          .map((v) => {
-            if ($(v).attr("href") !== "#modal2") {
-              let text = $(v)
-                .text()
-                .trim()
-                .replace(/\s/, " ")
-                .replace("arrow_downward", "")
-                .toLowerCase();
+        $("a.btn.waves-effect.waves-light.orange.download").each(
+          (index, element) => {
+            const href = $(element).attr("href");
+            if (href) {
+              let text = $(element).text().trim().replace(/\s+/g, " ");
+
               videos[
                 text.includes("hd")
                   ? "videoHD"
                   : text.includes("watermark")
                   ? "videoWatermark"
                   : `video${i}`
-              ] = $(v).attr("href");
+              ] = href;
               i++;
             }
-          });
+          }
+        );
         if (images.length !== 0) {
           resolve({
             status: "success",
@@ -149,4 +146,4 @@ const MusicalDown = (url) =>
       .catch((e) => resolve({ status: "error", message: e.message }));
   });
 
-exports.MusicalDown = MusicalDown
+exports.MusicalDown = MusicalDown;

@@ -1,5 +1,7 @@
 const jadwal = require("../helper/listKota.json");
 const axios = require("axios");
+const config = require('../config'); // Import konfigurasi prefix
+
 
 const getFormattedDate = () => {
   const today = new Date();
@@ -40,9 +42,9 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Jadwal Sholat",
   description: "Cari jadwal sholat di suatu kota",
-  command: `${global.prefix[1]}jadwalsholat`,
+  command: `${config.prefix[1]}jadwalsholat`,
   commandType: "plugin",
   isDependent: false,
-  help: `Gunakan format ini:${global.prefix[1]}jadwalsholat <nama kota>`,
+  help: `Gunakan format ini:${config.prefix[1]}jadwalsholat <nama kota>`,
   execute,
 };

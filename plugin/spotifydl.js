@@ -2,6 +2,9 @@ const { getOriginalUrl, downloadTrack } = require("../helper/spotify");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
+const ffmpeg = require('fluent-ffmpeg');
+const config = require('../config'); 
+
 
 const execute = async (sock, msg, args) => {
   const from = msg.key.remoteJid;
@@ -21,13 +24,22 @@ const execute = async (sock, msg, args) => {
       sock.sendMessage(from, "Sedang diproses...");
       const tempDir = os.tmpdir();
       const inputPath = path.join(tempDir, `input.mp3`);
+      const outputPath = path.join(tempDir, "output.mpeg");
       fs.writeFileSync(inputPath, buffer);
+      await new Promise((resolve, reject) => {
+        ffmpeg(inputPath)
+          .toFormat("mpeg")
+          .on("end", resolve)
+          .on("error", reject)
+          .save(outputPath);
+      });
       await sock.sendMessage(from, {
-        audio: {url: inputPath},
+        audio: { url: outputPath },
         ptt: false,
-        mimetype: 'audio/mpeg'
-    });
+        mimetype: "audio/mpeg",
+      });
       fs.unlinkSync(inputPath);
+      fs.unlinkSync(outputPath);
     }
   }
 };
@@ -35,9 +47,9 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Spotify",
   description: "Mendownload musik Spotify",
-  command: `${global.prefix[1]}spotifydl`,
+  command: `${config.prefix[1]}spotifydl`,
   commandType: "Downloader",
   isDependent: false,
-  help: `unakan ${global.prefix[1]}spotifydl <artist name> <track name>`,
+  help: `unakan ${config.prefix[1]}spotifydl <artist name> <track name>`,
   execute,
 };

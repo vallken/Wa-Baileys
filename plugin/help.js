@@ -1,5 +1,7 @@
 const fs = require("fs");
 const path = require("path");
+const config = require('../config'); // Import konfigurasi prefix
+
 
 const execute = async (sock, msg, args) => {
   const commandsPath = path.join(__dirname, "./");
@@ -36,7 +38,7 @@ const execute = async (sock, msg, args) => {
     helpMessage += "\n";
   }
 
-  helpMessage += `Untuk informasi lebih lanjut tentang perintah tertentu, ketik: ${global.prefix[1]}help <nama_perintah>`;
+  helpMessage += `Untuk informasi lebih lanjut tentang perintah tertentu, ketik: ${config.prefix[1]}help <nama_perintah>`;
 
   await sock.sendMessage(msg.key.remoteJid, { text: helpMessage });
 };
@@ -79,9 +81,9 @@ module.exports = {
   name: "Help",
   description:
     "Menampilkan daftar perintah atau informasi tentang perintah tertentu",
-  command: `${global.prefix[1]}help [nama perintah]`,
+  command: `${config.prefix[1]}help [nama perintah]`,
   commandType: "Utility",
   isDependent: false,
-  help: `Gunakan ${global.prefix[1]}help untuk melihat daftar semua perintah, atau ${global.prefix[1]}help <nama_perintah> untuk informasi detail tentang perintah tertentu.`,
+  help: `Gunakan ${config.prefix[1]}help untuk melihat daftar semua perintah, atau ${config.prefix[1]}help <nama_perintah> untuk informasi detail tentang perintah tertentu.`,
   execute: executeSpecific,
 };

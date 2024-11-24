@@ -1,4 +1,5 @@
 const axios = require("axios");
+const config = require('../config'); // Import konfigurasi prefix
 
 /**
  *
@@ -135,9 +136,9 @@ const execute = async function (sock, msg, args) {
 module.exports = {
   name: "Facebook Downloader",
   description: "Download Video dari Facebook",
-  command: `${global.prefix[1]}fbdl`,
+  command: `${config.prefix[1]}fbdl`,
   commandType: "Downloader",
   isDependent: false,
-  help: `ketik ${global.prefix[1]}fbdl [url] untuk menggunakannya`,
+  help: `ketik ${config.prefix[1]}fbdl [url] untuk menggunakannya`,
   execute,
 };

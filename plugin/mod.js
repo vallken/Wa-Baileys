@@ -1,4 +1,6 @@
 const Admin = require("../lib/db/admin");
+const config = require('../config'); 
+
 
 const formatNumber = (number) => {
   // Jika nomor dimulai dengan '08', ganti dengan '62'
@@ -63,9 +65,9 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Admin",
   description: "Kelola daftar admin WhatsApp",
-  command: `${global.prefix[1]}mod`,
+  command: `${config.prefix[1]}mod`,
   commandType: "Admin",
   isDependent: false,
-  help: `Gunakan ${global.prefix[1]}admin <add|remove|list> <username>`,
+  help: `Gunakan ${config.prefix[1]}admin <add|remove|list> <username>`,
   execute,
 };

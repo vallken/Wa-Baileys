@@ -1,5 +1,6 @@
 const cheerio = require("cheerio");
 const axios = require("axios");
+const config = require('../config'); 
 
 async function execute(sock, msg, args) {
   if (!args.length) {
@@ -65,9 +66,9 @@ ${angka}
 module.exports = {
   name: "Zodiak Harian",
   description: "Ramalan Zodiak Harian Kamu",
-  command: `${global.prefix[1]}!zodiak`,
+  command: `${config.prefix[1]}zodiak`,
   commandType: "Info",
   isDependent: false,
-  help: "Ketik !zodiak [nama zodiak] untuk melihat ramalan harian. Contoh: !zodiak aries",
+  help: `Ketik ${config.prefix[1]}zodiak [nama zodiak] untuk melihat ramalan harian. Contoh: !zodiak aries`,
   execute,
 };

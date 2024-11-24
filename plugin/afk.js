@@ -1,4 +1,6 @@
 const afkModel = require("../lib/db/afk");
+const config = require('../config'); // Import konfigurasi prefix
+
 
 const setAfkStatus = async (userId, reason) => {
   try {
@@ -55,7 +57,7 @@ const execute = async (sock, msg, args) => {
       });
     } else {
       await sock.sendMessage(from, {
-        text: `Gunakan ${global.prefix[1]}afk <alasan> untuk mengatur status AFK Anda.`,
+        text: `Gunakan ${config.prefix[1]}afk <alasan> untuk mengatur status AFK Anda.`,
       });
     }
   } else {
@@ -109,7 +111,7 @@ const checkAfkMention = async (sock, msg) => {
 module.exports = {
   name: "afk",
   description: "Set AFK status",
-  command: `${global.prefix[1]}afk`,
+  command: `${config.prefix[1]}afk`,
   commandType: "plugin",
   isDependent: false,
   help: "Gunakan !afk <alasan> untuk mengatur status AFK Anda.",

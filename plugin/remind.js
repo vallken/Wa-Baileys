@@ -1,6 +1,8 @@
   const Agenda = require("agenda");
   require("dotenv").config();
   const jadwalPlugin = require("./ingatkansholat");
+  const config = require('../config'); 
+
 
   const agenda = new Agenda({
     db: { address: process.env.MONGO_URI, collection: 'agenda' },
@@ -150,14 +152,14 @@
   module.exports = {
     name: "Pengingat",
     description: "Menjadwalkan dan mengirim pesan pengingat",
-    command: `${global.prefix[1]}remind`,
+    command: `${config.prefix[1]}remind`,
     commandType: "Utility",
     isDependent: false,
     help:
-      `${global.prefix[1]}remind [list|add|remove]\n` +
+      `${config.prefix[1]}remind [list|add|remove]\n` +
       "- list: Menampilkan daftar pengingat\n" +
-      `- add: ${global.prefix[1]}remind add dd/mm/yyyy jam:menit pesan\n` +
-      `- remove: ${global.prefix[1]}remind remove [nomor_tugas]`,
+      `- add: ${config.prefix[1]}remind add dd/mm/yyyy jam:menit pesan\n` +
+      `- remove: ${config.prefix[1]}remind remove [nomor_tugas]`,
     execute,
     initializeSchedules,
   };

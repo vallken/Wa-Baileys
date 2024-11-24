@@ -1,4 +1,6 @@
 const axios = require("axios");
+const config = require('../config'); // Import konfigurasi prefix
+
 
 const url = "https://snapinst.com/api/ig";
 
@@ -95,9 +97,9 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Instagram Stories Downloader",
   description: "Download Story Dari Instagram",
-  command: `${global.prefix[1]}igstory`,
+  command: `${config.prefix[1]}igstory`,
   commandType: "Downloader",
   isDependent: false,
-  help: `ketik ${global.prefix[1]}igstory [username] untuk menggunakannya`,
+  help: `ketik ${config.prefix[1]}igstory [username] untuk menggunakannya`,
   execute,
 };

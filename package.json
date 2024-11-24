@@ -13,6 +13,7 @@
   "dependencies": {
     "@distube/ytdl-core": "^4.14.4",
     "@google/generative-ai": "^0.17.0",
+    "@hapi/boom": "^10.0.1",
     "@nechlophomeriaa/spotify-finder": "^1.0.5",
     "@whiskeysockets/baileys": "^6.7.7",
     "agenda": "^5.0.0",
@@ -33,6 +34,7 @@
     "path": "^0.12.7",
     "pino-pretty": "^11.2.2",
     "qrcode-terminal": "^0.12.0",
+    "qs": "^6.13.1",
     "readline-sync": "^1.4.10",
     "socks-proxy-agent": "^8.0.4",
     "stream": "^0.0.3",

@@ -2,6 +2,8 @@ const formData = require("form-data");
 const axios = require("axios");
 const { downloadMediaMessage } = require("@whiskeysockets/baileys");
 require('dotenv').config()
+const config = require('../config'); 
+
 
 
 function isValidURL(input) {
@@ -63,9 +65,9 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Enhance Gambar Remini",
   description: "Enhance gambar menggunakan AI Remini",
-  command: `${global.prefix[1]}remini`,
+  command: `${config.prefix[1]}remini`,
   commandType: "Editor",
   isDependent: false,
-  help: `Gunakan ${global.prefix[1]}remini [link / gambar]`,
+  help: `Gunakan ${config.prefix[1]}remini [link / gambar]`,
   execute,
 };

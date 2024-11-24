@@ -3,9 +3,11 @@ const cron = require("node-cron");
 const fs = require("fs").promises;
 const path = require("path");
 const Jadwal = require("../lib/db/jadwal");
+const config = require('../config'); // Import konfigurasi prefix
 
 
-const filePath = path.resolve(__dirname, "../helper/listKota.json");
+const filePath = path.resolve(__dirname, "..", "helper", "listKota.json");
+const prayerPath = path.resolve(__dirname, "..", "helper", "prayerMsg.json");
 
 let listKota;
 let scheduleJobs = {};
@@ -73,9 +75,21 @@ const getNewSchedule = async (id) => {
   }
 };
 
-const sendMessage = (sock, userId, time, prayerName) => {
-  const message = `Waktu sholat ${prayerName} telah tiba pada ${time}.`;
-  sock.sendMessage(userId, { text: message });
+const sendMessage = async (sock, userId, time, prayerName) => {
+  try {
+    const data = await fs.readFile(prayerPath, "utf8");
+    const messages = JSON.parse(data);
+
+    const prayerMessages = messages[prayerName] || messages["Default"];
+
+    let message =
+      `Waktu sholat ${prayerName} telah tiba pada ${time} WIB. \n\n` +
+      prayerMessages[Math.floor(Math.random() * prayerMessages.length)];
+
+    sock.sendMessage(userId, { text: message });
+  } catch (error) {
+    console.error("Error reading prayer messages:", error);
+  }
 };
 
 const schedulePrayerTimes = (jadwal, sock, userId) => {
@@ -100,7 +114,7 @@ const schedulePrayerTimes = (jadwal, sock, userId) => {
   };
 
   const prayerTimes = [
-    { time: jadwal.imsak, name: "Imsak" },
+    // { time: jadwal.imsak, name: "Imsak" },
     { time: jadwal.subuh, name: "Subuh" },
     // { time: jadwal.terbit, name: "Terbit" },
     { time: jadwal.dhuha, name: "Dhuha" },
@@ -193,10 +207,10 @@ cron.schedule("0 1 * * *", () => scheduleDailyJobs(global.sock), {
 module.exports = {
   name: "Ingatkan Jadwal Sholat",
   description: "Membantu anda ingatkan jadwal sholat pada kota anda",
-  command: `${global.prefix[1]}ingatkansholat`,
+  command: `${config.prefix[1]}ingatkansholat`,
   commandType: "plugin",
   isDependent: false,
-  help: `Gunakan format ini: ${global.prefix[1]}ingatkansholat <nama_kota>`,
+  help: `Gunakan format ini: ${config.prefix[1]}ingatkansholat <nama_kota>`,
   execute,
   initializeSchedules,
 };

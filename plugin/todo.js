@@ -1,4 +1,6 @@
 const Todo = require("../lib/db/todo");
+const config = require('../config'); 
+
 
 const setTodo = async (userId, task, status) => {
   try {
@@ -127,9 +129,9 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Todo List",
   description: "Daftar tugas sederhana",
-  command: `${global.prefix[1]}todo`,
+  command: `${config.prefix[1]}todo`,
   commandType: "Utility",
   isDependent: false,
-  help: `Gunakan ${global.prefix[1]}todo <add|delete|update> [tugas]`,
+  help: `Gunakan ${config.prefix[1]}todo <add|delete|update> [tugas]`,
   execute,
 };

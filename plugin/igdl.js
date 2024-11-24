@@ -5,6 +5,8 @@ const mime = require('mime-types');
 const fs = require('fs');
 const os = require('os');
 const crypto = require('crypto');
+const config = require('../config'); // Import konfigurasi prefix
+
 
 async function getFileInfo(url) {
   try {
@@ -126,9 +128,9 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Instagram Downloader",
   description: "Mengunduh media Instagram",
-  command: `${global.prefix[1]}igdl`,
+  command: `${config.prefix[1]}igdl`,
   commandType: "Downloader",
   isDependent: false,
-  help: `Ketik ${global.prefix[1]}igdl [link_instagram] untuk mengunduhnya`,
+  help: `Ketik ${config.prefix[1]}igdl [link_instagram] untuk mengunduhnya`,
   execute,
 };

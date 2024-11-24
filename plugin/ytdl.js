@@ -3,6 +3,8 @@ const ffmpeg = require("fluent-ffmpeg");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
+const config = require('../config'); 
+
 
 /**
  * Crops a video/audio buffer using ffmpeg
@@ -181,9 +183,9 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Youtube Downloader",
   description: "Download video Youtube dengan kualitas yang diinginkan",
-  command: `${global.prefix[1]}ytdl`,
+  command: `${config.prefix[1]}ytdl`,
   commandType: "Utility",
   isDependent: false,
-  help: `\nKetik ${global.prefix[1]}yt [link_video_youtube] untuk mengunduhnya`,
+  help: `\nKetik ${config.prefix[1]}yt [link_video_youtube] untuk mengunduhnya`,
   execute,
 };

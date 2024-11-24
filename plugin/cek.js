@@ -1,5 +1,7 @@
 const fs = require("fs");
 const path = require("path");
+const config = require('../config'); // Import konfigurasi prefix
+
 
 // Define the path to the output file
 const filePath = path.join(__dirname, "../python/", "output.txt");
@@ -32,7 +34,7 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "Admin",
   description: "Cek Gacha",
-  command: `${global.prefix[1]}cek`,
+  command: `${config.prefix[1]}cek`,
   commandType: "Admin",
   isDependent: false,
   help: ``,

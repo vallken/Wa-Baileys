@@ -4,6 +4,8 @@ const {
   HarmBlockThreshold,
 } = require("@google/generative-ai");
 require("dotenv").config()
+const config = require('../config'); // Import konfigurasi prefix
+
 
 const apiKey = process.env.GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(apiKey);
@@ -35,7 +37,7 @@ async function execute(sock, msg, args) {
 module.exports = {
   name: "Gemini AI",
   description: "Chat with Gemini AI",
-  command: `${global.prefix[1]}chat`,
+  command: `${config.prefix[1]}chat`,
   commandType: "Info",
   isDependent: false,
   help: "Just Chatting.",

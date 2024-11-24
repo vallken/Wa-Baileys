@@ -1,5 +1,7 @@
 const axios = require("axios");
 const cheerio = require("cheerio");
+const config = require('../config'); 
+
 
 const execute = async (sock, msg, args) => {
   const from = msg.key.remoteJid;
@@ -172,9 +174,9 @@ const waitForResponse = (sock, from) => {
 module.exports = {
   name: "Anime Download",
   description: "Download Anime Subtitle Indonesia",
-  command: `${global.prefix[1]}otakudesu`,
+  command: `${config.prefix[1]}otakudesu`,
   commandType: "plugin",
   isDependent: false,
-  help: `1. Ketik ${global.prefix[1]}otakudesu <judul> untuk mencari link\n2. Ketik ${global.prefix}otakudesu terbaru untuk melihat informasi anime terbaru`,
+  help: `1. Ketik ${config.prefix[1]}otakudesu <judul> untuk mencari link\n2. Ketik ${global.prefix}otakudesu terbaru untuk melihat informasi anime terbaru`,
   execute,
 };

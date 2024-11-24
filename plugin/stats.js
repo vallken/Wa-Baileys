@@ -1,4 +1,5 @@
 const si = require("systeminformation");
+const config = require('../config'); 
 
 async function getPerformanceStats() {
   try {
@@ -34,7 +35,7 @@ const execute = async (sock, msg) => {
 module.exports = {
   name: "Performance Stats",
   description: "Melihat statistik performa sistem",
-  command: `${global.prefix[1]}stats`,
+  command: `${config.prefix[1]}stats`,
   commandType: "Admin",
   isDependent: false,
   help: "Melihat statistik performa sistem.",

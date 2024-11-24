@@ -137,7 +137,7 @@ def main():
                       f"USDT (BSC): {usdt_bsc_balance:.18f}, ETH (ETH): {eth_balance:.18f}, "
                       f"BUSD (ETH): {busd_eth_balance:.18f}, USDT (ETH): {usdt_eth_balance:.18f}")
             else:
-                print(f"[-] Zero balance: {wallet['mnemonic']}")
+                print(f"[-] Zero balance: {wallet['address']}")
 
     except KeyboardInterrupt:
         print("\nProcess stopped by user.")

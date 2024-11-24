@@ -1,3 +1,5 @@
+const config = require('../config'); 
+
 const execute = async (sock, msg, args) => {
   const moment = (await import("moment")).default;
   const timestamp = Math.floor(Date.now() / 1000) - 300;
@@ -16,7 +18,7 @@ const execute = async (sock, msg, args) => {
 module.exports = {
   name: "ping",
   description: "Ping Pong Command",
-  command: `${global.prefix[1]}ping`,
+  command: `${config.prefix[1]}ping`,
   commandType: "Utility",
   isDependent: false,
   execute,

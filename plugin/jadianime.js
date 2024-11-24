@@ -2,6 +2,9 @@ const formData = require("form-data");
 const axios = require("axios");
 const { downloadMediaMessage } = require("@whiskeysockets/baileys");
 require('dotenv').config()
+const config = require('../config'); // Import konfigurasi prefix
+
+
 function isValidURL(input) {
   try {
     new URL(input);
@@ -61,7 +64,7 @@ const execute = async (sock, msg, args) => {
 module.exports = {
     name: "AI Anime",
     description: "Mengubah gambar ke menjadi Anime",
-    command: `${global.prefix[1]}jadianime`,
+    command: `${config.prefix[1]}jadianime`,
     commandType: "plugin",
     isDependent: false,
     help: "Kirimkan Gambar / link untuk menjadi anime",
