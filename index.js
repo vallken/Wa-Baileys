@@ -1,15 +1,21 @@
 // Load environment variables and dependencies
-require('dotenv').config();
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys");
+require("dotenv").config();
+const {
+  default: makeWASocket,
+  useMultiFileAuthState,
+  DisconnectReason,
+} = require("@whiskeysockets/baileys");
 const { Boom } = require("@hapi/boom");
 const fs = require("fs").promises;
 const path = require("path");
 const express = require("express");
 const mongoose = require("mongoose");
 const Admin = require("./lib/db/admin");
-const logger = require('./utils/logger');
-const {checkAndExecuteAlias} = require("./plugin/alias")
-const config = require('./config'); 
+const logger = require("./utils/logger");
+const { checkAndExecuteAlias } = require("./plugin/alias");
+const config = require("./config");
+const { isPluginInMaintenance } = require("./plugin/mt");
+const { handleMessage } = require("./plugin/quiz");
 
 // Override console methods with logger
 console.log = (...args) => logger.info(args.length > 1 ? args : args[0]);
@@ -63,7 +69,6 @@ async function loadPlugins() {
   }
 }
 
-
 // Message handling
 const debounce = (func, delay) => {
   let inDebounce;
@@ -88,20 +93,27 @@ async function handleCommand(sock, msg, messageContent) {
     });
     return;
   }
-
+  const admin = await Admin.findOne({ userId });
   const commandHandler = client.commands.get(command);
-  
-  // Check admin permissions
+  const isInMaintenance = await isPluginInMaintenance(command);
+
+  if (isInMaintenance) {
+    if (!admin || userId !== admin.userId) {
+      await sock.sendMessage(msg.key.remoteJid, {
+        text: `Plugin '${command}' sedang dalam maintenance. Coba lagi nanti!`,
+      });
+    }
+    return;
+  }
   if (commandHandler.commandType === "Admin") {
-    const admin = await Admin.findOne({ userId });
     if (!admin || userId !== admin.userId) {
       await sock.sendMessage(msg.key.remoteJid, {
         text: "You don't have permission to use this command",
       });
       return;
     }
-    logger.info(`Command executed by ${userId}`);
   }
+  logger.info(`Command executed by ${userId}`);
 
   try {
     await sock.sendPresenceUpdate("composing", msg.key.remoteJid);
@@ -133,23 +145,23 @@ async function connectToWhatsApp() {
       const shouldReconnect =
         lastDisconnect.error instanceof Boom &&
         lastDisconnect.error.output.statusCode !== DisconnectReason.loggedOut;
-      
+
       logger.info(
         "Connection closed due to ",
         lastDisconnect.error,
         ", reconnecting ",
         shouldReconnect
       );
-      
+
       connectionStatus = "disconnected";
-      
+
       if (shouldReconnect) {
         connectToWhatsApp();
       }
     } else if (connection === "open") {
       logger.info("Connected to WhatsApp");
       connectionStatus = "connected";
-      
+
       // Initialize scheduled tasks
       require("./plugin/ingatkansholat").initializeSchedules(sock);
       require("./plugin/remind").initializeSchedules(sock);
@@ -160,17 +172,18 @@ async function connectToWhatsApp() {
   let isProcessingCommand = false;
   sock.ev.on("messages.upsert", async (m) => {
     if (isProcessingCommand) return;
-    
+
     const msg = m.messages[0];
     if (msg.key.fromMe) return;
 
     await require("./plugin/afk").checkAfkMention(sock, msg);
+    await require("./plugin/afk").checkAfkMessage(sock, msg);
 
     const messageContent = extractMessageContent(msg);
-    
+
     if (!messageContent) return;
 
-    // Check if message starts with a command prefix
+
     if (config.prefix.some((p) => messageContent.startsWith(p))) {
       isProcessingCommand = true;
       try {
@@ -180,8 +193,11 @@ async function connectToWhatsApp() {
       }
       return;
     }
+    const quizExecuted = await handleMessage(sock, msg);
+    if (quizExecuted) {
+      processedMessages++;
+    }
 
-    // If no command prefix, check for alias
     const aliasExecuted = await checkAndExecuteAlias(sock, msg, messageContent);
     if (aliasExecuted) {
       processedMessages++;
@@ -190,6 +206,7 @@ async function connectToWhatsApp() {
 
   sock.ev.on("creds.update", saveCreds);
 }
+
 
 // Helper function to extract message content
 function extractMessageContent(msg) {
@@ -220,7 +237,7 @@ app.get("/status", (req, res) => {
     status: connectionStatus,
     processedMessages: processedMessages,
     loadedPlugins: Array.from(client.commands.keys()),
-    commandsLoaded: client.commands.size
+    commandsLoaded: client.commands.size,
   });
 });
 

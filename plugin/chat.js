@@ -39,7 +39,7 @@ module.exports = {
   description: "Chat with Gemini AI",
   command: `${config.prefix[1]}chat`,
   commandType: "Info",
-  isDependent: false,
+  isDependent: true,
   help: "Just Chatting.",
   execute,
 };

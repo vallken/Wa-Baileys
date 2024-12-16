@@ -125,8 +125,10 @@ const execute = async (sock, msg, args) => {
   }
 
   await sock.sendMessage(from, { text: "Tunggu Sebentar..." });
-
-  const response = await yt.youtubeDownloader(videoUrl, selectedIndex + 1);
+  const notificationCallback = (message, type = 'info') => {
+    sock.sendMessage(from, { text: message });
+  };
+  const response = await yt.youtubeDownloader(videoUrl, selectedIndex + 1, notificationCallback);
   if (!response.status) {
     return sock.sendMessage(from, { text: response.message });
   }

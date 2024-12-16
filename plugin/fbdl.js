@@ -1,4 +1,3 @@
-const axios = require("axios");
 const config = require('../config'); // Import konfigurasi prefix
 
 /**

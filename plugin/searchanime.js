@@ -23,7 +23,7 @@ function isValidURL(input) {
 
 const execute = async (sock, msg, args) => {
   try {
-    if (msg.message.imageMessage || msg.message.documentMessage) {
+    if (msg.message.imageMessage || msg.message.documentMessage || msg.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
       const buffer = await downloadMediaMessage(msg, "buffer", {});
       const request = await axios({
         method: "POST",

@@ -1,5 +1,6 @@
 const Alias = require("../lib/db/alias");
 const config = require('../config');
+const { isDependent } = require("./cek");
 
 // Constants
 const COMMANDS = {
@@ -101,7 +102,6 @@ async function handleExecuteAlias(sock, sender, command, additionalArgs = []) {
 
     let response = alias.response;
     
-    // Handle placeholders
     response = response.replace(/\{(\d+)\}/g, (match, number) => {
       const argIndex = parseInt(number) - 1;
       return additionalArgs[argIndex] || match;
@@ -291,7 +291,7 @@ const execute = async (sock, msg, args) => {
 2. Hapus: ${config.prefix[1]}alias remove <command>
 3. Lihat daftar: ${config.prefix[1]}alias list [halaman]
 4. Cari: ${config.prefix[1]}alias search <kata_kunci>
-5. Gunakan: ${config.prefix[1]}<command>`
+5. Gunakan: <command>`
       });
       return;
     }
@@ -330,7 +330,11 @@ const execute = async (sock, msg, args) => {
   }
 };
 module.exports = {
+  name: "Alias",
+  description: "Manajemen alias",
+  command: `${config.prefix[1]}alias`,
   commandType: "Utility",
+  isDependent: false,
   execute,
   checkAndExecuteAlias,
   description: "Membuat, menghapus, dan menggunakan alias untuk perintah custom dengan dukungan mention",
@@ -339,6 +343,5 @@ module.exports = {
 2. ${config.prefix[1]}alias remove <command> - Menghapus alias
 3. ${config.prefix[1]}alias list [halaman] - Melihat daftar alias
 4. ${config.prefix[1]}alias search <kata_kunci> - Mencari alias
-5. <command> - Menggunakan alias`,
-  command: `${config.prefix[1]}alias`,
+5. <command> - Menggunakan alias`
 };

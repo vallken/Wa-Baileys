@@ -3,3 +3,6 @@ auth_info_baileys
 .env
 plugin/userList
 cookies.json
+tester
+plugin/dood.js
+test.js

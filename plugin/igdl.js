@@ -130,7 +130,7 @@ module.exports = {
   description: "Mengunduh media Instagram",
   command: `${config.prefix[1]}igdl`,
   commandType: "Downloader",
-  isDependent: false,
+  isDependent: true,
   help: `Ketik ${config.prefix[1]}igdl [link_instagram] untuk mengunduhnya`,
   execute,
 };

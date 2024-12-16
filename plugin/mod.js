@@ -31,11 +31,13 @@ const execute = async (sock, msg, args) => {
     admins.forEach((admin, i) => {
       teks += `- ${admin.userId}\n`;
     });
-
+    const adminMentions = admins.map((admin) => admin.userId);
     return sock.sendMessage(from, {
-      text: teks,
+      text: teks.replace("@s.whatsapp.net", ""),
+      mentions: adminMentions
     });
   }
+  
 
   const userId = formatNumber(args[1]);
   if (args[0] === "add") {

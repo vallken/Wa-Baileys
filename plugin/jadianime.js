@@ -1,9 +1,8 @@
 const formData = require("form-data");
 const axios = require("axios");
 const { downloadMediaMessage } = require("@whiskeysockets/baileys");
-require('dotenv').config()
-const config = require('../config'); // Import konfigurasi prefix
-
+require("dotenv").config();
+const config = require("../config"); 
 
 function isValidURL(input) {
   try {
@@ -16,13 +15,8 @@ function isValidURL(input) {
 
 const execute = async (sock, msg, args) => {
   const url = process.env.BASE_AI_URL;
-  if (!args)
-    return sock.sendMessage(msg.key.remoteJid, {
-      text: "Masukkan link gambar yang akan di-edit.",
-    });
-  else if (msg.message.imageMessage || msg.message.documentMessage) {
+  if (msg.message.imageMessage || msg.message.documentMessage) {
     const buffer = await downloadMediaMessage(msg, "buffer", {});
-
     const form = new formData();
     form.append("image", buffer, "image.jpg");
     const response = await axios.post(`${url}/ai/toanime`, form, {
@@ -62,12 +56,11 @@ const execute = async (sock, msg, args) => {
 };
 
 module.exports = {
-    name: "AI Anime",
-    description: "Mengubah gambar ke menjadi Anime",
-    command: `${config.prefix[1]}jadianime`,
-    commandType: "plugin",
-    isDependent: false,
-    help: "Kirimkan Gambar / link untuk menjadi anime",
-    execute,
-  
+  name: "AI Anime",
+  description: "~Mengubah gambar ke menjadi Anime~ Deprecated",
+  command: `${config.prefix[1]}jadianime`,
+  commandType: "plugin",
+  isDependent: false,
+  help: "Kirimkan Gambar / link untuk menjadi anime",
+  execute,
 };
